@@ -14,6 +14,9 @@ npm run db:seed                   # demo content (40 recipes, articles, users, r
 npm run dev                       # http://localhost:3000
 ```
 
+**Windows (Command Prompt):** use `copy .env.example .env` instead of `cp`. In PowerShell, `cp` works.
+Requires a running PostgreSQL 16 whose credentials match `DATABASE_URL` in `.env`.
+
 | Login | Email | Password |
 |---|---|---|
 | Admin (CMS) | admin@simmerly.test | Admin123! |
