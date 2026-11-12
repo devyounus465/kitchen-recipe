@@ -7,3 +7,4 @@ backups
 *.tsbuildinfo
 test-results
 screenshots
+.pgdata

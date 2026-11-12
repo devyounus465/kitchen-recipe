@@ -4,7 +4,21 @@ Next.js 15 · React 19 · TypeScript · Tailwind · PostgreSQL 16 · Drizzle ORM
 
 See **[docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md)** for the brief → feature matrix, architecture, data model and milestones.
 
-## Quick start (local)
+## Easiest: one command (no PostgreSQL install needed)
+
+Requires only **Node.js 20+**.
+
+```bash
+npm install
+npm run local
+```
+
+This downloads a portable PostgreSQL via npm, starts it, creates the tables, loads demo
+content on first run and opens the site at **http://localhost:3000**. Press `Ctrl+C` to stop.
+Data is kept in `.pgdata/`. Delete that folder to start fresh. No `.env` file is needed.
+(On Windows, use a normal, non-Administrator terminal.)
+
+## Quick start with your own PostgreSQL
 
 ```bash
 cp .env.example .env              # set DATABASE_URL, AUTH_SECRET

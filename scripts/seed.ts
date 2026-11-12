@@ -7,7 +7,7 @@ import * as s from "../src/db/schema";
 import { CATEGORY_TREE, STAFF, COMMUNITY, RECIPES, ARTICLES, REVIEW_TEXT, U } from "./seed-data";
 import { slugify, parseQty } from "../src/lib/utils";
 
-const client = postgres(process.env.DATABASE_URL!);
+const client = postgres(process.env.DATABASE_URL!, { onnotice: () => {} });
 const db = drizzle(client, { schema: s });
 let seed = 42; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const pick = <T,>(a: readonly T[]) => a[Math.floor(rnd() * a.length)];

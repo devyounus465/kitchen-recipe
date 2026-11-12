@@ -1,6 +1,6 @@
 import "./env";
 import postgres from "postgres";
-const sql = postgres(process.env.DATABASE_URL!);
+const sql = postgres(process.env.DATABASE_URL!, { onnotice: () => {} });
 await sql.unsafe(`
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 ALTER TABLE recipes ADD COLUMN IF NOT EXISTS search tsvector GENERATED ALWAYS AS (
