@@ -25,7 +25,7 @@ export async function popularCards(limit = 8) {
   return db.select(cardCols).from(recipes).where(published).orderBy(desc(recipes.viewCount)).limit(limit);
 }
 
-export async function categoryDescendantIds(id: number): Promise<number[]> {
+async function categoryDescendantIds(id: number): Promise<number[]> {
   const kids = await db.select({ id: categories.id }).from(categories).where(eq(categories.parentId, id));
   return [id, ...kids.map((k) => k.id)];
 }
@@ -48,7 +48,7 @@ export async function navTree() {
   return all.filter((c) => !c.parentId).map((p) => ({ ...p, children: all.filter((c) => c.parentId === p.id) }));
 }
 
-export type SearchParams = { q?: string; ingredient?: string; exclude?: string; maxTime?: number; diets?: string[]; category?: string; sort?: string; page?: number };
+type SearchParams = { q?: string; ingredient?: string; exclude?: string; maxTime?: number; diets?: string[]; category?: string; sort?: string; page?: number };
 export async function searchRecipes(p: SearchParams, pageSize = 24) {
   const conds = [sql`r.status = 'published'`];
   const q = (p.q || "").trim();

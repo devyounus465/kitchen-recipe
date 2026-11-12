@@ -15,6 +15,7 @@ services:
     build: .
     restart: unless-stopped
     depends_on: { db: { condition: service_healthy } }
+    env_file: [.env]   # optional settings (e.g. SOCIAL_*); values below take precedence
     environment:
       DATABASE_URL: postgres://simmerly:${POSTGRES_PASSWORD}@db:5432/simmerly
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env (openssl rand -hex 32)}
@@ -22,11 +23,17 @@ services:
       ALLOWED_ORIGINS: ${DOMAIN},www.${DOMAIN}
     volumes: [uploads:/data/uploads]
     expose: ["3000"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    depends_on: [app]
+    depends_on: { app: { condition: service_healthy } }
     environment:
       DOMAIN: ${DOMAIN}
     ports: ["80:80", "443:443"]

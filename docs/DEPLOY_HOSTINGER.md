@@ -36,13 +36,19 @@ For a private repository, use a GitHub fine-grained personal access token (read-
 ```bash
 docker compose up -d --build                       # first build takes ~3–5 minutes
 docker compose exec app npm run db:push            # create tables + search index
-docker compose exec app npm run db:seed            # OPTIONAL: demo content (wipes content tables!)
-docker compose exec app npm run import -- scripts/your-content.json   # real content import
+docker compose exec app npm run create-admin       # create YOUR administrator account
 ```
 Open `https://YOUR_DOMAIN`. Caddy obtains the HTTPS certificate automatically on first visit.
+Check health any time: `curl https://YOUR_DOMAIN/api/health/` → `{"ok":true,"db":"up"}`.
 
-**Immediately** log in at `/admin` (seed admin: admin@simmerly.test / Admin123!) and change the
-password, or create your own admin user and delete the demo one.
+**Content**
+- Real launch: add content in `/admin`, or bulk-import JSON:
+  `docker compose exec app npm run import -- scripts/your-content.json`
+- Demo/staging only: `docker compose exec app npm run db:seed -- --force`
+  (deletes all content; prints a random admin password once).
+
+**Email**: set the `SMTP_*` lines in `.env` (a Hostinger mailbox works), then
+`docker compose up -d`. Without SMTP, password-reset emails only appear in Admin → Email outbox.
 
 ## 6. Backups (daily, 14-day retention)
 ```bash

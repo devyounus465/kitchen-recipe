@@ -31,7 +31,7 @@ async function cardsFor(cfg: Section["config"]): Promise<Card[]> {
   return latestCards(limit);
 }
 
-async function Hero({ s, ctx }: { s: Section; ctx: Ctx }) {
+async function Hero({ s }: { s: Section }) {
   const cards = await cardsFor(s.config);
   const [main, ...rest] = cards;
   if (!main) return null;
@@ -162,7 +162,7 @@ async function VideoRow({ s }: { s: Section }) {
 
 export async function RenderSection({ s, ctx }: { s: Section; ctx: Ctx }) {
   switch (s.type) {
-    case "hero": return <Hero s={s} ctx={ctx} />;
+    case "hero": return <Hero s={s} />;
     case "recipe_grid": return <RecipeGrid s={s} ctx={ctx} />;
     case "recipe_row": return <RecipeGrid s={s} ctx={ctx} row />;
     case "category_tiles": return <CategoryTiles s={s} />;

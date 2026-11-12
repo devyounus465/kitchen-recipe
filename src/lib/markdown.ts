@@ -3,7 +3,8 @@ function inline(s: string) {
   return esc(s)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/(^|[^*])_(.+?)_/g, "$1<em>$2</em>")
-    .replace(/\[(.+?)\]\(((?:https?:\/\/|\/)[^)\s]*)\)/g, '<a href="$2">$1</a>');
+    .replace(/\[(.+?)\]\((\/[^)\s]*)\)/g, '<a href="$2">$1</a>')
+    .replace(/\[(.+?)\]\((https?:\/\/[^)\s]*)\)/g, '<a href="$2" rel="nofollow noopener noreferrer" target="_blank">$1</a>');
 }
 /** Minimal, XSS-safe markdown: headings, paragraphs, ordered/unordered lists, quotes, bold, italic, links. */
 export function renderMarkdown(md: string): string {

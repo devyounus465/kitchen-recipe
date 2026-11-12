@@ -2,7 +2,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { db, recipes, reviews, recipePhotos, categories, collections, collectionRecipes, articles, videos, users, media, homepageSections, pages, contactMessages, recipeCategories } from "@/db";
+import { db, recipes, reviews, recipePhotos, categories, collections, collectionRecipes, articles, videos, users, media, homepageSections, pages, contactMessages } from "@/db";
 import { requireStaff, requireAdmin } from "@/lib/auth";
 import { saveFile } from "@/lib/storage";
 import { refreshRecipeStats } from "@/lib/stats";
@@ -12,6 +12,10 @@ import type { FormState } from "./public";
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 const num = (fd: FormData, k: string) => Number(fd.get(k)) || 0;
+const oneOf = <T extends string>(v: string, allowed: readonly T[], fallback: T): T => (allowed as readonly string[]).includes(v) ? (v as T) : fallback;
+/** Returns the id if that row exists, else null (avoids foreign-key errors from tampered forms). */
+async function existingUser(id: number) { if (!id) return null; const [r] = await db.select({ id: users.id }).from(users).where(eq(users.id, id)); return r?.id ?? null; }
+async function existingRecipe(id: number) { if (!id) return null; const [r] = await db.select({ id: recipes.id }).from(recipes).where(eq(recipes.id, id)); return r?.id ?? null; }
 const done = (msg = "Saved.") => { revalidatePath("/", "layout"); return { ok: true, message: msg } as FormState; };
 
 // ---------- moderation ----------
@@ -76,8 +80,8 @@ export async function deleteCollectionAdmin(fd: FormData) { await requireStaff()
 export async function saveArticle(_: FormState, fd: FormData): Promise<FormState> {
   const u = await requireStaff(); const id = num(fd, "id"); const title = str(fd, "title"); if (title.length < 3) return { error: "Title is required." };
   let heroUrl = str(fd, "heroUrl") || null; const f = fd.get("heroFile"); if (f instanceof File && f.size) { try { heroUrl = (await saveFile(f)).url; } catch (e) { return { error: (e as Error).message }; } }
-  const status = str(fd, "status") || "draft";
-  const v = { title, slug: slugify(str(fd, "slug") || title), kind: str(fd, "kind") || "article", dek: str(fd, "dek"), body: String(fd.get("body") || ""), heroUrl, authorId: num(fd, "authorId") || u.id, status,
+  const status = oneOf(str(fd, "status"), ["draft", "published"] as const, "draft");
+  const v = { title, slug: slugify(str(fd, "slug") || title), kind: oneOf(str(fd, "kind"), ["article", "guide", "news"] as const, "article"), dek: str(fd, "dek"), body: String(fd.get("body") || ""), heroUrl, authorId: (await existingUser(num(fd, "authorId"))) ?? u.id, status,
     relatedRecipeIds: str(fd, "relatedRecipeIds").split(/[\s,]+/).map(Number).filter(Boolean), seoTitle: str(fd, "seoTitle") || null, seoDescription: str(fd, "seoDescription") || null, updatedAt: new Date() };
   let aid = id;
   try {
@@ -94,8 +98,9 @@ export async function saveVideo(_: FormState, fd: FormData): Promise<FormState> 
   const u = await requireStaff(); const id = num(fd, "id"); const title = str(fd, "title"); if (title.length < 3) return { error: "Title is required." };
   let videoUrl = str(fd, "videoUrl") || null; let thumbnailUrl = str(fd, "thumbnailUrl") || null;
   try { const vf = fd.get("videoFile"); if (vf instanceof File && vf.size) videoUrl = (await saveFile(vf)).url; const tf = fd.get("thumbFile"); if (tf instanceof File && tf.size) thumbnailUrl = (await saveFile(tf)).url; } catch (e) { return { error: (e as Error).message }; }
-  const status = str(fd, "status") || "draft";
-  const v = { title, slug: slugify(str(fd, "slug") || title), description: str(fd, "description"), videoUrl, thumbnailUrl, durationSec: num(fd, "durationSec"), recipeId: num(fd, "recipeId") || null, authorId: num(fd, "authorId") || u.id, status, seoTitle: str(fd, "seoTitle") || null, seoDescription: str(fd, "seoDescription") || null };
+  const status = oneOf(str(fd, "status"), ["draft", "published"] as const, "draft");
+  if (videoUrl && !/^(https:\/\/|\/media\/)\S+$/.test(videoUrl)) return { error: "Video URL must start with https:// (or be an uploaded file)." };
+  const v = { title, slug: slugify(str(fd, "slug") || title), description: str(fd, "description"), videoUrl, thumbnailUrl, durationSec: Math.max(0, num(fd, "durationSec")), recipeId: await existingRecipe(num(fd, "recipeId")), authorId: (await existingUser(num(fd, "authorId"))) ?? u.id, status, seoTitle: str(fd, "seoTitle") || null, seoDescription: str(fd, "seoDescription") || null };
   let vid = id;
   if (id) { const [cur] = await db.select().from(videos).where(eq(videos.id, id)); await db.update(videos).set({ ...v, publishedAt: status === "published" ? cur?.publishedAt ?? new Date() : cur?.publishedAt }).where(eq(videos.id, id)); }
   else vid = (await db.insert(videos).values({ ...v, publishedAt: status === "published" ? new Date() : null }).returning())[0].id;
@@ -110,7 +115,10 @@ export async function updateUserAdmin(_: FormState, fd: FormData): Promise<FormS
   const role = str(fd, "role"); const status = str(fd, "status");
   if (id === me.id && (role !== "admin" || status !== "active")) return { error: "You can't demote or ban yourself." };
   if (!["user", "contributor", "editor", "admin"].includes(role) || !["active", "banned"].includes(status)) return { error: "Invalid role or status." };
-  await db.update(users).set({ role, status, isStaff: fd.get("isStaff") === "on", title: str(fd, "title") || null, bio: str(fd, "bio") }).where(eq(users.id, id));
+  const [cur] = await db.select().from(users).where(eq(users.id, id)); if (!cur) return { error: "User not found." };
+  // Role or status change → end that user's existing sessions immediately.
+  const bump = cur.role !== role || cur.status !== status;
+  await db.update(users).set({ role, status, isStaff: fd.get("isStaff") === "on", title: str(fd, "title") || null, bio: str(fd, "bio"), ...(bump ? { sessionVersion: cur.sessionVersion + 1 } : {}) }).where(eq(users.id, id));
   return done("User updated.");
 }
 export async function deleteUserAdmin(fd: FormData) { const me = await requireAdmin(); const id = num(fd, "id"); if (id !== me.id) await db.delete(users).where(eq(users.id, id)); redirect("/admin/users"); }
@@ -131,7 +139,10 @@ export async function saveSection(_: FormState, fd: FormData): Promise<FormState
   await requireStaff(); const id = num(fd, "id");
   let config: Record<string, unknown> = {};
   try { config = JSON.parse(String(fd.get("config") || "{}")); } catch { return { error: "Config must be valid JSON." }; }
-  const v = { title: str(fd, "title"), type: str(fd, "type"), config, sortOrder: num(fd, "sortOrder"), enabled: fd.get("enabled") === "on" };
+  if (typeof config !== "object" || config === null || Array.isArray(config)) return { error: "Config must be a JSON object, e.g. {\"limit\": 4}." };
+  const type = oneOf(str(fd, "type"), ["hero", "recipe_grid", "recipe_row", "category_tiles", "collection_feature", "article_list", "video_row", "newsletter"] as const, "recipe_grid");
+  if (!str(fd, "title")) return { error: "Title is required." };
+  const v = { title: str(fd, "title"), type, config, sortOrder: num(fd, "sortOrder"), enabled: fd.get("enabled") === "on" };
   if (id) await db.update(homepageSections).set(v).where(eq(homepageSections.id, id)); else await db.insert(homepageSections).values(v);
   return done("Section saved.");
 }
@@ -154,4 +165,3 @@ export async function savePage(_: FormState, fd: FormData): Promise<FormState> {
   return done("Page saved.");
 }
 export async function markMessage(fd: FormData) { await requireStaff(); const id = num(fd, "id"); const [m] = await db.select().from(contactMessages).where(eq(contactMessages.id, id)); if (m) await db.update(contactMessages).set({ handled: !m.handled }).where(eq(contactMessages.id, id)); revalidatePath("/admin/messages"); }
-export async function addRecipeToCategory(fd: FormData) { await requireStaff(); await db.insert(recipeCategories).values({ recipeId: num(fd, "recipeId"), categoryId: num(fd, "categoryId") }).onConflictDoNothing(); }

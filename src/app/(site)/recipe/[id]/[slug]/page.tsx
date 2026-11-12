@@ -134,7 +134,7 @@ export default async function RecipePage({ params, searchParams }: P) {
                   ))}
                 </ul>
               </div>
-              <ReviewForm recipeId={r.id} loggedIn={!!user} existing={mine ? { rating: mine.rating, body: mine.body } : null} path={path} />
+              <ReviewForm recipeId={r.id} loggedIn={!!user} existing={mine ? { id: mine.id, rating: mine.rating, body: mine.body } : null} path={path} />
             </div>
             <div className="mt-8"><ReviewList reviews={revs} sort={sort} /></div>
           </section>

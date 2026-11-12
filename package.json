@@ -13,16 +13,18 @@
     "db:reset": "tsx scripts/reset.ts && npm run db:push && npm run db:seed",
     "import": "tsx scripts/import.ts",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "node tests/e2e.mjs"
+    "test:e2e": "node tests/e2e.mjs",
+    "create-admin": "tsx scripts/create-admin.ts",
+    "test:security": "node tests/security.mjs"
   },
   "dependencies": {
     "@vercel/blob": "2.8.2",
     "bcryptjs": "^3.0.3",
-    "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.4",
     "jose": "^6.2.17",
     "lucide-react": "^1.72.0",
     "next": "^15.5.29",
+    "nodemailer": "10.2.1",
     "postgres": "^4.1.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -30,8 +32,8 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^26.6.6",
+    "@types/nodemailer": "8.0.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.6.2",
@@ -42,5 +44,12 @@
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "zod": "$zod",
+    "postcss": "$postcss"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }

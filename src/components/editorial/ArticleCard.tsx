@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Img } from "@/components/ui/Img";
 import { articleUrl, formatDate } from "@/lib/utils";
-export type ArticleRow = { id: number; slug: string; title: string; dek: string | null; heroUrl: string | null; kind: string; publishedAt: Date | null; authorName: string | null };
+type ArticleRow = { id: number; slug: string; title: string; dek: string | null; heroUrl: string | null; kind: string; publishedAt: Date | null; authorName: string | null };
 export const kindLabel = (k: string) => (k === "guide" ? "Cooking Guide" : k === "news" ? "News" : "Article");
 export function ArticleCard({ a, wide }: { a: ArticleRow; wide?: boolean }) {
   return (

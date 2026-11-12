@@ -1,12 +1,18 @@
 import "./env";
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { sql as dsql } from "drizzle-orm";
 import * as s from "../src/db/schema";
 import { CATEGORY_TREE, STAFF, COMMUNITY, RECIPES, ARTICLES, REVIEW_TEXT, U } from "./seed-data";
 import { slugify, parseQty } from "../src/lib/utils";
 
+// Safety: seeding DELETES all content. On production servers require an explicit --force.
+const PROD = process.env.NODE_ENV === "production";
+if (PROD && !process.argv.includes("--force")) {
+  console.error("✖ Refusing to seed: this deletes ALL recipes, users and content.\n  If you really want demo data on this server, run:  npm run db:seed -- --force");
+  process.exit(1);
+}
 const client = postgres(process.env.DATABASE_URL!, { onnotice: () => {} });
 const db = drizzle(client, { schema: s });
 let seed = 42; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
@@ -15,8 +21,10 @@ const daysAgo = (d: number) => new Date(Date.now() - d * 86400000);
 
 await client.unsafe(`TRUNCATE users, categories, recipes, articles, videos, collections, homepage_sections, pages, media, contact_messages, email_outbox, newsletter_subscribers RESTART IDENTITY CASCADE`);
 
-const hash = await bcrypt.hash("Password123!", 10);
-const adminHash = await bcrypt.hash("Admin123!", 10);
+// Local/demo: well-known passwords. Production (--force): random passwords, admin's printed once.
+const adminPassword = PROD ? crypto.randomBytes(12).toString("base64url") : "Admin123!";
+const hash = await bcrypt.hash(PROD ? crypto.randomBytes(24).toString("hex") : "Password123!", 10);
+const adminHash = await bcrypt.hash(adminPassword, 10);
 const [admin] = await db.insert(s.users).values({ email: "admin@simmerly.test", passwordHash: adminHash, name: "Site Admin", username: "admin", role: "admin", isStaff: false, createdAt: daysAgo(120) }).returning();
 const staff = await db.insert(s.users).values(STAFF.map((p, i) => ({ email: `${p.username}@simmerly.test`, passwordHash: hash, name: p.name, username: p.username, bio: p.bio, title: p.title, role: "editor", isStaff: true, createdAt: daysAgo(110 - i) }))).returning();
 const community = await db.insert(s.users).values(COMMUNITY.map(([name, username], i) => ({ email: `${username}@example.test`, passwordHash: hash, name, username, role: i < 4 ? "contributor" : "user", bio: "Home cook who loves feeding friends and family.", location: pick(["Austin, TX", "Portland, OR", "Columbus, OH", "Denver, CO", "Raleigh, NC", "Toronto, ON"]), createdAt: daysAgo(Math.floor(rnd() * 90) + 1) }))).returning();
@@ -135,5 +143,6 @@ await db.insert(s.pages).values([
   { slug: "terms-of-service", title: "Terms of Service", body: "_Last updated: November 2026_\n\n## Using Simmerly\nBy using this site you agree to these terms.\n\n## Your content\nYou retain ownership of recipes, reviews and photos you submit and grant us a licence to display them on Simmerly.\n\n## Community guidelines\nBe kind. Reviews must be about the recipe. We may remove content that violates these guidelines.\n\n## Disclaimer\nRecipes and nutrition information are provided for informational purposes." },
 ]);
 await db.insert(s.contactMessages).values({ name: "Laura P.", email: "laura@example.test", subject: "Recipe question", message: "Can the lasagna be frozen before baking?" });
+if (PROD) console.log(`\nAdmin login: admin@simmerly.test / ${adminPassword}\n(Save it now; it is not shown again. Change it after logging in.)\n`);
 console.log(`Seeded: ${recipeIds.length} recipes, ${articleIds.length} articles, ${allUsers.length + 1} users`);
 await client.end();

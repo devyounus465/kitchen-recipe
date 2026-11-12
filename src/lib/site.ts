@@ -2,7 +2,14 @@ export const SITE = {
   name: "Simmerly",
   tagline: "Recipes, reviews & cooking inspiration from home cooks",
   url: process.env.SITE_URL || "http://localhost:3000",
-  social: ["facebook", "instagram", "pinterest", "tiktok", "youtube"],
+  /** Social profile URLs shown in the footer. Leave empty ("") to hide an icon. */
+  social: {
+    Facebook: process.env.SOCIAL_FACEBOOK || "",
+    Instagram: process.env.SOCIAL_INSTAGRAM || "",
+    Pinterest: process.env.SOCIAL_PINTEREST || "",
+    TikTok: process.env.SOCIAL_TIKTOK || "",
+    YouTube: process.env.SOCIAL_YOUTUBE || "",
+  } as Record<string, string>,
 };
 export const DIETS = [
   ["vegetarian", "Vegetarian"], ["vegan", "Vegan"], ["gluten-free", "Gluten-Free"],

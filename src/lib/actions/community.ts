@@ -5,6 +5,7 @@ import { db, reviews, reviewHelpful, recipePhotos, recipes } from "@/db";
 import { getUser } from "@/lib/auth";
 import { saveFile } from "@/lib/storage";
 import { refreshRecipeStats } from "@/lib/stats";
+import { rateLimit } from "@/lib/ratelimit";
 import type { FormState } from "./public";
 
 export async function submitReview(_: FormState, fd: FormData): Promise<FormState> {
@@ -12,7 +13,8 @@ export async function submitReview(_: FormState, fd: FormData): Promise<FormStat
   const recipeId = Number(fd.get("recipeId")); const rating = Number(fd.get("rating")); const body = String(fd.get("body") || "").trim();
   if (!(rating >= 1 && rating <= 5)) return { error: "Please select a star rating." };
   if (body.length > 3000) return { error: "Reviews are limited to 3,000 characters." };
-  const [r] = await db.select({ id: recipes.id, authorId: recipes.authorId }).from(recipes).where(eq(recipes.id, recipeId));
+  if (!rateLimit(`review:${user.id}`, 20)) return { error: "You're posting reviews too quickly. Please try again later." };
+  const [r] = await db.select({ id: recipes.id, authorId: recipes.authorId }).from(recipes).where(and(eq(recipes.id, recipeId), eq(recipes.status, "published")));
   if (!r) return { error: "Recipe not found." };
   if (r.authorId === user.id) return { error: "You can't rate your own recipe." };
   // Simple auto-moderation: links get held for review.
@@ -36,6 +38,7 @@ export async function deleteReview(fd: FormData) {
 
 export async function toggleHelpful(reviewId: number): Promise<{ ok: boolean; count?: number; voted?: boolean; needLogin?: boolean }> {
   const user = await getUser(); if (!user) return { ok: false, needLogin: true };
+  if (!rateLimit(`helpful:${user.id}`, 60, 60_000)) return { ok: false };
   const existing = await db.select().from(reviewHelpful).where(and(eq(reviewHelpful.reviewId, reviewId), eq(reviewHelpful.userId, user.id)));
   if (existing.length) await db.delete(reviewHelpful).where(and(eq(reviewHelpful.reviewId, reviewId), eq(reviewHelpful.userId, user.id)));
   else await db.insert(reviewHelpful).values({ reviewId, userId: user.id });
@@ -48,6 +51,9 @@ export async function uploadRecipePhoto(_: FormState, fd: FormData): Promise<For
   const recipeId = Number(fd.get("recipeId")); const file = fd.get("photo");
   if (!(file instanceof File) || !file.size) return { error: "Please choose a photo to upload." };
   if (!file.type.startsWith("image/")) return { error: "Only image files are allowed." };
+  if (!rateLimit(`photo:${user.id}`, 10)) return { error: "You've uploaded several photos recently. Please try again later." };
+  const [r] = await db.select({ id: recipes.id }).from(recipes).where(and(eq(recipes.id, recipeId), eq(recipes.status, "published")));
+  if (!r) return { error: "Recipe not found." };
   try {
     const saved = await saveFile(file);
     await db.insert(recipePhotos).values({ recipeId, userId: user.id, url: saved.url, caption: String(fd.get("caption") || "").slice(0, 300), status: "pending" });

@@ -2,7 +2,9 @@
 
 Next.js 15 · React 19 · TypeScript · Tailwind · PostgreSQL 16 · Drizzle ORM
 
-See **[docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md)** for the brief → feature matrix, architecture, data model and milestones.
+- **[docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md)**: brief → feature matrix, architecture, data model, milestones
+- **[docs/DEPLOY_HOSTINGER.md](docs/DEPLOY_HOSTINGER.md)**: production deployment (VPS + Docker + HTTPS)
+- **[SECURITY.md](SECURITY.md)**: security model
 
 ## Easiest: one command (no PostgreSQL install needed)
 
@@ -39,6 +41,8 @@ npm run dev                       # http://localhost:3000
 **Windows (Command Prompt):** use `copy .env.example .env` instead of `cp`. In PowerShell, `cp` works.
 Requires a running PostgreSQL 16 whose credentials match `DATABASE_URL` in `.env`.
 
+Demo logins (created by the **local/demo** seed only; production seeding uses random passwords):
+
 | Login | Email | Password |
 |---|---|---|
 | Admin (CMS) | admin@simmerly.test | Admin123! |
@@ -54,9 +58,10 @@ CMS: **/admin**.
 | `npm run db:push` | Apply schema (drizzle-kit) + search index/extension (`scripts/post-migrate.ts`) |
 | `npm run db:seed` | Reset content tables and load demo data |
 | `npm run db:reset` | Drop everything, push schema, seed |
+| `npm run create-admin` | Create/promote an administrator (use this for a real launch) |
 | `npm run import -- file.json` | Bulk-import recipes/articles (see `scripts/sample-import.json`) |
 | `npm run test:e2e` | Playwright end-to-end suite against a running server (`BASE_URL` env) |
-| `scripts/backup.sh` / `scripts/restore.sh` | pg_dump + uploads archive with rotation / restore |
+| `deploy/backup.sh` / `deploy/restore.sh` | Docker: database dump + uploads archive (14-day rotation) / restore |
 
 ## Free hosting: Vercel + Neon
 

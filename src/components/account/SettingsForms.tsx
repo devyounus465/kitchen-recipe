@@ -18,6 +18,7 @@ export function ProfileForm({ u }: { u: U }) {
       </div>
       <div><label className="label" htmlFor="s-bio">About me</label><textarea id="s-bio" name="bio" rows={3} maxLength={500} defaultValue={u.bio || ""} className="input" /><FieldError state={state} name="bio" /></div>
       <label className="flex items-center gap-2 text-[15px]"><input type="checkbox" name="newsletter" defaultChecked={u.newsletter} className="h-4 w-4 accent-brand" />Email me the Daily Dish newsletter</label>
+      <div className="max-w-sm"><label className="label" htmlFor="s-cur">Current password <span className="font-normal text-muted">(only needed to change your email)</span></label><input id="s-cur" name="currentPassword" type="password" autoComplete="current-password" className="input" /><FieldError state={state} name="currentPassword" /></div>
       <SubmitButton>Save Changes</SubmitButton>
     </form>
   );
@@ -35,7 +36,7 @@ export function PasswordForm() {
 export function DeleteForm() {
   const [state, action] = useActionState(deleteAccount, null);
   return (
-    <form action={action} onReset={(e) => e.preventDefault()} className="space-y-3"><FormStatus state={state} /><p className="text-[15px]">This permanently deletes your account, reviews, photos, saved recipes and collections. Type <b>DELETE</b> to confirm.</p>
-      <input name="confirm" className="input max-w-xs" aria-label="Type DELETE to confirm" /><button className="btn border-2 border-red-700 text-red-700 hover:bg-red-700 hover:text-white">Delete My Account</button></form>
+    <form action={action} onReset={(e) => e.preventDefault()} className="space-y-3"><FormStatus state={state} /><p className="text-[15px]">This permanently deletes your account, reviews, photos, saved recipes and collections. Type <b>DELETE</b> and your password to confirm.</p>
+      <div className="flex flex-wrap gap-3"><input name="confirm" className="input max-w-[200px]" aria-label="Type DELETE to confirm" placeholder="DELETE" /><input name="password" type="password" autoComplete="current-password" className="input max-w-[240px]" aria-label="Your password" placeholder="Your password" /></div><button className="btn border-2 border-red-700 text-red-700 hover:bg-red-700 hover:text-white">Delete My Account</button></form>
   );
 }

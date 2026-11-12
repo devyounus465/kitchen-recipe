@@ -28,6 +28,7 @@ await ctx.route("**/images.unsplash.com/**", (r) => r.fulfill({ contentType: "im
 ctx.setDefaultTimeout(10000);
 const page = patch(await ctx.newPage());
 const pageErrors = []; page.on("pageerror", (e) => pageErrors.push(e.message));
+const ADMIN_PW = process.env.E2E_ADMIN_PASSWORD || "Admin123!";
 const stamp = Date.now(); const email = `e2e${stamp}@example.test`; const pw = "Testing123";
 
 // 1. Templates return 200
@@ -108,7 +109,7 @@ await step("Login", async () => { await page.fill("#password", pw); await page.c
 const admin = await browser.newContext(ctxOpts); await admin.route("**/images.unsplash.com/**", (r) => r.fulfill({ contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg'/>" }));
 admin.setDefaultTimeout(10000);
 const ap = patch(await admin.newPage());
-await step("Admin login", async () => { await ap.goto(BASE + "/account/login/?next=/admin"); await ap.fill("#email", "admin@simmerly.test"); await ap.fill("#password", "Admin123!"); await ap.click("main button[type=submit]"); await ap.waitForURL((u) => u.pathname.startsWith("/admin")); expect(await ap.getByText("Published recipes").count(), "dashboard missing"); });
+await step("Admin login", async () => { await ap.goto(BASE + "/account/login/?next=/admin"); await ap.fill("#email", "admin@simmerly.test"); await ap.fill("#password", ADMIN_PW); await ap.click("main button[type=submit]"); await ap.waitForURL((u) => u.pathname.startsWith("/admin")); expect(await ap.getByText("Published recipes").count(), "dashboard missing"); });
 await step("Password recovery end-to-end", async () => {
   const p3 = patch(await browser.newPage(ctxOpts)); await p3.goto(BASE + "/account/forgot-password/"); await p3.fill("#email", email); await p3.click("main button[type=submit]"); await p3.getByText("we've sent a password reset link").waitFor();
   await ap.goto(BASE + "/admin/outbox"); const body = await ap.locator("pre").first().innerText(); const link = body.match(/https?:\/\/\S+reset-password\/\?token=\w+/)?.[0]; expect(link, "no reset link in outbox");
@@ -133,7 +134,7 @@ await step("Admin: ban user blocks login", async () => {
   await ap.goto(BASE + "/admin/users?q=" + encodeURIComponent(email)); await ap.click("text=E2E Tester"); await ap.selectOption("select[name=status]", "banned"); await ap.click("button:has-text('Save')"); await ap.getByText("User updated").waitFor();
   const p4 = patch(await browser.newPage(ctxOpts)); await p4.goto(BASE + "/account/login/"); await p4.fill("#email", email); await p4.fill("#password", "NewPass456"); await p4.click("main button[type=submit]"); await p4.getByText("suspended").waitFor(); await p4.close();
 });
-await step("Non-staff cannot open admin", async () => { const r = await page.goto(BASE + "/admin"); expect(!page.url().includes("/admin") || r.status() >= 300, page.url()); });
+await step("Non-staff cannot open admin", async () => { const r = await page.goto(BASE + "/admin"); expect(!new URL(page.url()).pathname.startsWith("/admin"), page.url()); });
 await step("SEO: recipe JSON-LD + canonical", async () => { const html = await (await ctx.request.get(BASE + recipePath)).text(); expect(html.includes('"@type":"Recipe"') && html.includes('rel="canonical"'), "missing"); });
 await step("Contact form submits", async () => { const p5 = patch(await browser.newPage(ctxOpts)); await p5.goto(BASE + "/contact/"); await p5.fill("#c-name", "Test"); await p5.fill("#c-email", "t@example.test"); await p5.fill("#c-sub", "Hello there"); await p5.fill("#c-msg", "This is a test message."); await p5.click("button:has-text('Send Message')"); await p5.getByText("Thanks for reaching out").waitFor(); await p5.close(); });
 await step("Mobile: hamburger menu opens", async () => { const m = await browser.newContext({ ...ctxOpts, viewport: { width: 390, height: 844 } }); const mp = patch(await m.newPage()); await mp.goto(BASE + "/"); await mp.click("[aria-label='Open menu'] >> nth=0"); expect(await mp.locator("[role=dialog] >> text=Dinners").isVisible(), "drawer"); await m.close(); });

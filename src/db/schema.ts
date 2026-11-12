@@ -23,6 +23,8 @@ export const users = pgTable("users", {
   isStaff: boolean("is_staff").notNull().default(false), // shown as editorial author
   title: varchar("title", { length: 120 }), // e.g. "Senior Food Editor"
   newsletter: boolean("newsletter").notNull().default(false),
+  /** Bumped on password change/reset/ban to invalidate existing sessions. */
+  sessionVersion: integer("session_version").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
 });

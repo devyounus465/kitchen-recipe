@@ -17,7 +17,7 @@ export function Card({ children, className, title, action, pad = true }: { child
     </section>
   );
 }
-export const abtn = "inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-[14px] font-semibold transition disabled:opacity-50";
+const abtn = "inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-[14px] font-semibold transition disabled:opacity-50";
 export const abtnPrimary = cn(abtn, "bg-[#0f1115] text-white hover:bg-[#2a2f3a]");
 export const abtnBrand = cn(abtn, "bg-brand text-white hover:bg-brand-dark");
 export const abtnGhost = cn(abtn, "border border-admin-line bg-white text-[#1d2433] hover:bg-[#f3f4f7]");

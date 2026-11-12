@@ -11,7 +11,7 @@ function Pw({ name = "password", label = "Password", auto = "current-password" }
   return (<div><label className="label" htmlFor={name}>{label}</label><div className="relative"><input id={name} name={name} type={show ? "text" : "password"} required autoComplete={auto} className="input pr-11" />
     <button type="button" onClick={() => setShow(!show)} aria-label={show ? "Hide password" : "Show password"} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted hover:text-ink">{show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button></div></div>);
 }
-export function Shell({ title, sub, children }: { title: string; sub?: React.ReactNode; children: React.ReactNode }) {
+function Shell({ title, sub, children }: { title: string; sub?: React.ReactNode; children: React.ReactNode }) {
   return (<div className="container-site py-12"><div className="mx-auto max-w-md"><h1 className="text-center text-[34px] font-extrabold">{title}</h1>{sub && <p className="mt-2 text-center text-[17px] text-muted">{sub}</p>}<div className="mt-8 rounded-xl border border-rule p-6 shadow-card sm:p-8">{children}</div></div></div>);
 }
 export function LoginForm({ next, reason }: { next?: string; reason?: string }) {

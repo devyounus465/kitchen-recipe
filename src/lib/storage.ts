@@ -6,7 +6,7 @@ import { put } from "@vercel/blob";
 
 export const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || "./uploads");
 const ALLOWED: Record<string, string> = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif", "video/mp4": ".mp4" };
-export const MAX_BYTES = 4 * 1024 * 1024; // stays under Vercel's 4.5MB request limit
+const MAX_BYTES = 4 * 1024 * 1024; // stays under Vercel's 4.5MB request limit
 const MAX_VIDEO_BYTES = 60 * 1024 * 1024;
 /** On serverless hosts (Vercel/Netlify) the local disk is temporary, so files go to Vercel Blob. */
 const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;

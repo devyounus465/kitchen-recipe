@@ -82,7 +82,7 @@ for nav and tags; H1 40/48 desktop, 32/40 mobile.
 | Media | Storage adapter (`lib/storage.ts`): local disk (`UPLOAD_DIR`) served via `/media/*`; S3/R2 adapter for production | |
 | Email | Outbox table + console (dev); SMTP/Resend adapter (prod) | Password reset works end-to-end |
 | Deploy | Docker (multi-stage) + docker-compose (app + postgres), Nginx/Caddy TLS, security headers (CSP, HSTS, X-Frame-Options) | |
-| Backup | `scripts/backup.sh` (pg_dump + uploads tar, 14-day rotation), `scripts/restore.sh` | |
+| Backup | `deploy/backup.sh` (pg_dump + uploads tar, 14-day rotation), `deploy/restore.sh`; Neon has built-in point-in-time restore | |
 
 Expansion seams: search adapter, storage adapter, email adapter, `homepage_sections` JSON
 config, role system, `/api/*` route handlers usable by a future mobile app.
