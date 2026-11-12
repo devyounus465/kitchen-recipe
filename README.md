@@ -58,6 +58,16 @@ CMS: **/admin**.
 | `npm run test:e2e` | Playwright end-to-end suite against a running server (`BASE_URL` env) |
 | `scripts/backup.sh` / `scripts/restore.sh` | pg_dump + uploads archive with rotation / restore |
 
+## Free demo link (share your local site)
+
+```bash
+npm run build && npm start                         # fast production server on :3000
+cloudflared tunnel --url http://localhost:3000     # in a 2nd terminal → https://xxxx.trycloudflare.com
+```
+Install cloudflared on Windows with `winget install --id Cloudflare.cloudflared`. No account is needed.
+The link works while your computer and both terminals stay on, and it changes on each restart.
+Tunnel domains are pre-allowed for form submissions in `next.config.mjs` (extend with `ALLOWED_ORIGINS`).
+
 ## Production deployment
 
 ```bash
