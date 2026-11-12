@@ -33,15 +33,20 @@ const user = (await ask("PostgreSQL username (press Enter for postgres): ")) || 
 let password = "";
 let admin: ReturnType<typeof postgres> | null = null;
 
+const fromEnv = process.env.PGPASSWORD;
+if (fromEnv) say("Using the password from the PGPASSWORD variable.");
 for (let attempt = 1; attempt <= 3 && !admin; attempt++) {
-  password = await ask(`Password for "${user}" (the one you chose when installing PostgreSQL): `, true);
+  password = attempt === 1 && fromEnv ? fromEnv : await ask(`Password for "${user}" (the one you chose when installing PostgreSQL): `, true);
   const conn = postgres({ host: "127.0.0.1", port: Number(port), user, password, database: "postgres", max: 1, connect_timeout: 8, onnotice: () => {} });
   try { await conn`SELECT 1`; admin = conn; say(`${c.g}Connected to PostgreSQL ✓${c.x}`); }
   catch (e) {
     await conn.end({ timeout: 1 }).catch(() => {});
     const err = e as { code?: string; message?: string; errors?: { code?: string }[] };
     const code = err.code || err.errors?.[0]?.code;
-    if (code === "28P01") fail("Wrong password. Try again (it's the password from the PostgreSQL installer).");
+    if (code === "28P01") {
+      fail(`Wrong password (received ${password.length} characters). Check Caps Lock / keyboard language and try again.`);
+      if (attempt === 2) console.log('  Tip: cancel with Ctrl+C and run:  set "PGPASSWORD=your-password"  then  npm run setup');
+    }
     else if (code === "ECONNREFUSED" || code === "ETIMEDOUT") {
       fail(`Can't reach PostgreSQL on port ${port}.`);
       console.log("  It may not be running. Press Win+R, type services.msc, find 'postgresql-x64-…', right-click → Start.");
