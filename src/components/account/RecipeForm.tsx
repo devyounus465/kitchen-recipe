@@ -27,8 +27,8 @@ export function RecipeForm({ r = {}, cats, admin, authors }: { r?: RecipeFormDat
           <div><label className="label" htmlFor="rf-desc">Description *</label><textarea id="rf-desc" name="description" rows={3} defaultValue={r.description} className="input" placeholder="What makes this recipe special?" /><FieldError state={state} name="description" /></div>
           <div className="grid gap-4 sm:grid-cols-[160px_1fr] sm:items-center">
             <Img src={preview} alt="Recipe photo preview" w={400} className="aspect-[4/3] w-full rounded-lg" />
-            <div><label className="label" htmlFor="rf-img">Photo</label><input id="rf-img" name="image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) setPreview(URL.createObjectURL(f)); }} className="block text-[15px] file:mr-3 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:font-bold file:text-white" />
-              <p className="mt-1 text-[13px] text-muted">JPG, PNG or WebP, up to 8MB. Landscape photos work best.</p><FieldError state={state} name="image" />
+            <div><label className="label" htmlFor="rf-img">Photo</label><input id="rf-img" name="image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f && f.size > 4 * 1024 * 1024) { alert("This photo is larger than 4MB. Please choose a smaller image."); e.target.value = ""; return; } if (f) setPreview(URL.createObjectURL(f)); }} className="block text-[15px] file:mr-3 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:font-bold file:text-white" />
+              <p className="mt-1 text-[13px] text-muted">JPG, PNG or WebP, up to 4MB. Landscape photos work best.</p><FieldError state={state} name="image" />
               {admin && <><label className="label mt-3" htmlFor="rf-imgurl">…or image URL</label><input id="rf-imgurl" name="imageUrlText" defaultValue={r.imageUrl || ""} className="input" placeholder="https://… or /media/…" /></>}</div>
           </div>
         </div>

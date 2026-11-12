@@ -20,7 +20,7 @@ export function PhotoStrip({ title, photos, recipeId, loggedIn, path }: { title:
       {open && (state?.ok ? <div className="mt-4"><FormStatus state={state} /></div> : (
         <form action={action} onReset={(e) => e.preventDefault()} className="mt-4 grid gap-3 rounded-lg border border-rule p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
           <input type="hidden" name="recipeId" value={recipeId} />
-          <div><label className="label" htmlFor="ph">Photo (JPG, PNG, WebP · max 8MB)</label><input id="ph" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required className="block w-full text-[15px] file:mr-3 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:font-bold file:text-white" /></div>
+          <div><label className="label" htmlFor="ph">Photo (JPG, PNG, WebP · max 4MB)</label><input id="ph" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required onChange={(e) => { const f = e.target.files?.[0]; if (f && f.size > 4 * 1024 * 1024) { alert("This photo is larger than 4MB. Please choose a smaller image."); e.target.value = ""; } }} className="block w-full text-[15px] file:mr-3 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:font-bold file:text-white" /></div>
           <div><label className="label" htmlFor="cap">Caption</label><input id="cap" name="caption" maxLength={300} className="input" placeholder="Optional" /></div>
           <SubmitButton pendingText="Uploading…">Upload</SubmitButton>
           <div className="sm:col-span-3"><FormStatus state={state} /></div>

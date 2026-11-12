@@ -58,6 +58,18 @@ CMS: **/admin**.
 | `npm run test:e2e` | Playwright end-to-end suite against a running server (`BASE_URL` env) |
 | `scripts/backup.sh` / `scripts/restore.sh` | pg_dump + uploads archive with rotation / restore |
 
+## Free hosting: Vercel + Neon
+
+1. **Neon** (neon.tech): create a project, copy the **pooled** connection string.
+2. From your computer, create tables + demo data in Neon:
+   `set "DATABASE_URL=<neon url>"` then `npm run db:push` and `npm run db:seed`.
+3. **Vercel** (vercel.com): Add New → Project → import this repo. Env vars:
+   `DATABASE_URL` (Neon URL), `AUTH_SECRET` (32+ random chars), `SITE_URL` (your vercel.app URL).
+4. Vercel → Storage → create a **Blob** store and connect it to the project (adds `BLOB_READ_WRITE_TOKEN`), then redeploy.
+
+Notes: images are limited to 4MB on Vercel and videos use YouTube/Vimeo/MP4 links. Choose the same
+region for Neon and Vercel functions. Vercel's free Hobby plan is for non-commercial use.
+
 ## Free demo link (share your local site)
 
 ```bash
