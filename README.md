@@ -18,7 +18,15 @@ content on first run and opens the site at **http://localhost:3000**. Press `Ctr
 Data is kept in `.pgdata/`. Delete that folder to start fresh. No `.env` file is needed.
 (On Windows, use a normal, non-Administrator terminal.)
 
-## Quick start with your own PostgreSQL
+## Using PostgreSQL installed on your computer (guided)
+
+```bash
+npm install
+npm run setup     # asks for your PostgreSQL password, creates DB + .env + tables + demo data
+npm run dev       # http://localhost:3000
+```
+
+## Quick start with your own PostgreSQL (manual)
 
 ```bash
 cp .env.example .env              # set DATABASE_URL, AUTH_SECRET

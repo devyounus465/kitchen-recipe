@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "setup": "tsx scripts/setup.ts",
     "local": "tsx scripts/local.ts",
     "dev": "next dev -p 3000",
     "build": "next build",
