@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-white text-body antialiased; font-size: 18px; line-height: 1.5; }
+  a { @apply transition-colors; }
+  :focus-visible { outline: 2px solid #ce4620; outline-offset: 2px; }
+  h1, h2, h3, h4 { @apply text-ink; }
+}
+@layer components {
+  .container-site { @apply mx-auto w-full max-w-site px-4 md:px-6; }
+  .eyebrow { @apply text-[13px] font-bold uppercase tracking-[0.08em] text-brand; }
+  .h-section { @apply text-[26px] md:text-[32px] font-extrabold leading-tight tracking-[-0.01em] text-ink; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-[15px] font-bold uppercase tracking-[0.06em] transition-all disabled:cursor-not-allowed disabled:opacity-60; }
+  .btn-primary { @apply btn bg-brand text-white hover:bg-brand-dark active:scale-[.98]; }
+  .btn-outline { @apply btn border-2 border-ink text-ink hover:bg-ink hover:text-white; }
+  .btn-ghost { @apply btn border border-rule text-ink hover:border-ink; }
+  .input { @apply w-full rounded-md border border-[#b3b3b3] bg-white px-3.5 py-2.5 text-[16px] text-ink placeholder:text-[#8a8a8a] focus:border-ink focus:outline-none focus:ring-2 focus:ring-brand/30; }
+  .label { @apply mb-1.5 block text-[15px] font-bold text-ink; }
+  .link { @apply font-semibold text-brand underline decoration-1 underline-offset-2 hover:text-brand-dark; }
+  .prose-site { @apply text-[18px] leading-[1.65] text-body; }
+  .prose-site h2 { @apply mt-10 mb-3 text-[26px] font-extrabold leading-tight; }
+  .prose-site h3 { @apply mt-8 mb-2 text-[21px] font-bold; }
+  .prose-site p { @apply my-4; }
+  .prose-site ol { @apply my-4 list-decimal space-y-2 pl-6; }
+  .prose-site ul { @apply my-4 list-disc space-y-2 pl-6; }
+  .prose-site a { @apply link; }
+  .prose-site blockquote { @apply my-6 border-l-4 border-brand bg-tint px-5 py-4 font-semibold text-ink; }
+  .skeleton { @apply animate-pulse rounded bg-[#ececec]; }
+}
+@media print {
+  header, footer, nav, .no-print { display: none !important; }
+  body { font-size: 12pt; }
+  .print-only { display: block !important; }
+}
+.print-only { display: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { scrollbar-width: none; }
