@@ -1,3 +1,5 @@
+# Production stack: PostgreSQL + Next.js app + Caddy (automatic HTTPS).
+# Usage on the server:  cp deploy/env.example .env  (edit it)  →  docker compose up -d --build
 services:
   db:
     image: postgres:16-alpine
@@ -8,14 +10,29 @@ services:
       POSTGRES_DB: simmerly
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck: { test: ["CMD-SHELL", "pg_isready -U simmerly"], interval: 5s, retries: 10 }
+
   app:
     build: .
     restart: unless-stopped
     depends_on: { db: { condition: service_healthy } }
     environment:
       DATABASE_URL: postgres://simmerly:${POSTGRES_PASSWORD}@db:5432/simmerly
-      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET (openssl rand -hex 32)}
-      SITE_URL: ${SITE_URL:-http://localhost:3000}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env (openssl rand -hex 32)}
+      SITE_URL: https://${DOMAIN:?set DOMAIN in .env}
+      ALLOWED_ORIGINS: ${DOMAIN},www.${DOMAIN}
     volumes: [uploads:/data/uploads]
-    ports: ["127.0.0.1:3000:3000"]   # put Caddy/Nginx with TLS in front
-volumes: { pgdata: {}, uploads: {} }
+    expose: ["3000"]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [app]
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes: { pgdata: {}, uploads: {}, caddy_data: {}, caddy_config: {} }

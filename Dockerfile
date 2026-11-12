@@ -24,7 +24,7 @@ COPY --from=build --chown=app:app /app/public ./public
 COPY --from=build --chown=app:app /app/node_modules ./node_modules
 COPY --from=build --chown=app:app /app/scripts ./scripts
 COPY --from=build --chown=app:app /app/src/db ./src/db
-COPY --from=build --chown=app:app /app/src/lib/utils.ts ./src/lib/utils.ts
+COPY --from=build --chown=app:app /app/src/lib/utils.ts /app/src/lib/ingredients.ts ./src/lib/
 COPY --from=build --chown=app:app /app/drizzle.config.ts /app/package.json ./
 USER app
 EXPOSE 3000

@@ -80,18 +80,16 @@ Install cloudflared on Windows with `winget install --id Cloudflare.cloudflared`
 The link works while your computer and both terminals stay on, and it changes on each restart.
 Tunnel domains are pre-allowed for form submissions in `next.config.mjs` (extend with `ALLOWED_ORIGINS`).
 
-## Production deployment
+## Production deployment (VPS, e.g. Hostinger)
+
+Docker Compose runs PostgreSQL + app + Caddy (automatic HTTPS). Full step-by-step guide:
+**[docs/DEPLOY_HOSTINGER.md](docs/DEPLOY_HOSTINGER.md)**.
 
 ```bash
-echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)" >> .env
-echo "AUTH_SECRET=$(openssl rand -hex 32)" >> .env
-echo "SITE_URL=https://your-domain.com" >> .env
+cp deploy/env.example .env   # DOMAIN, POSTGRES_PASSWORD, AUTH_SECRET
 docker compose up -d --build
-docker compose exec app npx drizzle-kit push --force && docker compose exec app npx tsx scripts/post-migrate.ts
+docker compose exec app npm run db:push
 ```
-
-Put Caddy or Nginx in front for TLS (app listens on 127.0.0.1:3000). Security headers are set in `next.config.mjs`;
-session cookies are `httpOnly`, `SameSite=Lax` and `Secure` when `SITE_URL` is https. Schedule `scripts/backup.sh` via cron.
 
 ### Swappable adapters
 - **Media storage** — `src/lib/storage.ts` (local disk → S3/R2)

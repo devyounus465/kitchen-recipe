@@ -5,3 +5,5 @@ uploads
 backups
 screenshots
 .env
+.pgdata
+deploy/*.sh

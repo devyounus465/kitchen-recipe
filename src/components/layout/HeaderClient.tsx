@@ -38,7 +38,7 @@ function AccountMenu({ user }: { user: NonNullable<U> }) {
             return <Link key={href as string} href={href as string} onClick={() => setOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-[15px] text-ink hover:bg-tint hover:text-brand"><I className="h-4 w-4" />{label as string}</Link>;
           })}
           {user.staff && <Link href="/admin" className="flex items-center gap-2.5 px-4 py-2 text-[15px] font-semibold text-brand hover:bg-tint"><LayoutDashboard className="h-4 w-4" />Admin Dashboard</Link>}
-          <form action="/api/auth/logout" method="post" className="mt-1 border-t border-rule pt-1"><button className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-[15px] text-ink hover:bg-tint"><LogOut className="h-4 w-4" />Log Out</button></form>
+          <form action="/api/auth/logout/" method="post" className="mt-1 border-t border-rule pt-1"><button className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-[15px] text-ink hover:bg-tint"><LogOut className="h-4 w-4" />Log Out</button></form>
         </div>
       )}
     </div>
@@ -146,7 +146,7 @@ export function HeaderClient({ items, user }: { items: NavItem[]; user: U }) {
                 <Link href="/account/my-recipes/" className="btn-ghost px-3 text-[13px]">My Recipes</Link>
                 <Link href="/account/settings/" className="btn-ghost px-3 text-[13px]">Settings</Link>
                 {user.staff && <Link href="/admin" className="btn-ghost col-span-2 text-[13px]">Admin Dashboard</Link>}
-                <form action="/api/auth/logout" method="post" className="col-span-2"><button className="btn-outline w-full text-[13px]">Log Out</button></form>
+                <form action="/api/auth/logout/" method="post" className="col-span-2"><button className="btn-outline w-full text-[13px]">Log Out</button></form>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2"><Link href="/account/login/" className="btn-outline text-[13px]">Log In</Link><Link href="/account/register/" className="btn-primary text-[13px]">Sign Up</Link></div>

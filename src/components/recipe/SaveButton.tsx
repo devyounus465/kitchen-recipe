@@ -14,7 +14,7 @@ export function SaveButton({ recipeId, initial, variant = "icon", loggedIn }: { 
     if (!loggedIn) { router.push(`/account/login?next=${encodeURIComponent(path)}&reason=save`); return; }
     const next = !saved; setSaved(next);
     start(async () => {
-      const res = await fetch("/api/save", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ recipeId, saved: next }) });
+      const res = await fetch("/api/save/", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ recipeId, saved: next }) });
       if (!res.ok) { setSaved(!next); setToast("Something went wrong. Try again."); }
       else setToast(next ? "Saved to My Recipes" : "Removed from My Recipes");
       setTimeout(() => setToast(null), 2200);

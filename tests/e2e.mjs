@@ -20,7 +20,9 @@ async function step(name, fn) {
 const expect = (c, msg) => { if (!c) throw new Error(msg); };
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+// E2E_INSECURE=1 accepts self-signed HTTPS (e.g. testing the Docker/Caddy stack on localhost).
+const ctxOpts = process.env.E2E_INSECURE ? { ignoreHTTPSErrors: true } : {};
+const ctx = await browser.newContext({ ...ctxOpts, viewport: { width: 1366, height: 900 } });
 // Remote demo photos may be unreachable from CI; stub them so tests are deterministic.
 await ctx.route("**/images.unsplash.com/**", (r) => r.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="3"/>' }));
 ctx.setDefaultTimeout(10000);
@@ -62,7 +64,7 @@ await step("Register new account", async () => {
   await page.click("main button[type=submit]"); await page.waitForURL(/my-recipes/); expect(await page.getByText("Welcome to Simmerly").count(), "welcome missing");
 });
 await step("Register validation errors", async () => {
-  const p2 = patch(await browser.newPage()); await p2.goto(BASE + "/account/register/"); await p2.fill("#name", "X"); await p2.fill("#email", "bad"); await p2.fill("#password", "short"); await p2.click("main button[type=submit]");
+  const p2 = patch(await browser.newPage(ctxOpts)); await p2.goto(BASE + "/account/register/"); await p2.fill("#name", "X"); await p2.fill("#email", "bad"); await p2.fill("#password", "short"); await p2.click("main button[type=submit]");
   await p2.waitForSelector("[role=alert]"); expect(await p2.getByText("valid email").count(), "no email error"); await p2.close();
 });
 // 5. Save, collection, review, photo
@@ -103,12 +105,12 @@ await step("Logout", async () => { await page.goto(BASE + "/"); await page.click
 await step("Login with wrong password fails", async () => { await page.goto(BASE + "/account/login/"); await page.fill("#email", email); await page.fill("#password", "nope12345"); await page.click("main button[type=submit]"); await page.getByText("Incorrect email or password").waitFor(); });
 await step("Login", async () => { await page.fill("#password", pw); await page.click("main button[type=submit]"); await page.waitForURL(/my-recipes/); });
 // 7. Password recovery (reads reset link from admin outbox)
-const admin = await browser.newContext(); await admin.route("**/images.unsplash.com/**", (r) => r.fulfill({ contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg'/>" }));
+const admin = await browser.newContext(ctxOpts); await admin.route("**/images.unsplash.com/**", (r) => r.fulfill({ contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg'/>" }));
 admin.setDefaultTimeout(10000);
 const ap = patch(await admin.newPage());
 await step("Admin login", async () => { await ap.goto(BASE + "/account/login/?next=/admin"); await ap.fill("#email", "admin@simmerly.test"); await ap.fill("#password", "Admin123!"); await ap.click("main button[type=submit]"); await ap.waitForURL((u) => u.pathname.startsWith("/admin")); expect(await ap.getByText("Published recipes").count(), "dashboard missing"); });
 await step("Password recovery end-to-end", async () => {
-  const p3 = patch(await browser.newPage()); await p3.goto(BASE + "/account/forgot-password/"); await p3.fill("#email", email); await p3.click("main button[type=submit]"); await p3.getByText("we've sent a password reset link").waitFor();
+  const p3 = patch(await browser.newPage(ctxOpts)); await p3.goto(BASE + "/account/forgot-password/"); await p3.fill("#email", email); await p3.click("main button[type=submit]"); await p3.getByText("we've sent a password reset link").waitFor();
   await ap.goto(BASE + "/admin/outbox"); const body = await ap.locator("pre").first().innerText(); const link = body.match(/https?:\/\/\S+reset-password\/\?token=\w+/)?.[0]; expect(link, "no reset link in outbox");
   await p3.goto(link.replace(/^https?:\/\/[^/]+/, BASE)); await p3.fill("#password", "NewPass456"); await p3.fill("#confirm", "NewPass456"); await p3.click("main button[type=submit]"); await p3.waitForURL(/my-recipes/); await p3.close();
 });
@@ -129,12 +131,12 @@ await step("Admin: homepage section toggle", async () => { await ap.goto(BASE + 
 await step("Admin: edit page SEO", async () => { await ap.goto(BASE + "/admin/pages"); await ap.click("text=About Us"); await ap.fill("input[name=seoTitle]", "About Simmerly"); await ap.click("button:has-text('Save')"); await ap.getByText("Page saved").waitFor(); const html = await (await ap.request.get(BASE + "/about-us/")).text(); expect(html.includes("<title>About Simmerly"), "seo title not applied"); });
 await step("Admin: ban user blocks login", async () => {
   await ap.goto(BASE + "/admin/users?q=" + encodeURIComponent(email)); await ap.click("text=E2E Tester"); await ap.selectOption("select[name=status]", "banned"); await ap.click("button:has-text('Save')"); await ap.getByText("User updated").waitFor();
-  const p4 = patch(await browser.newPage()); await p4.goto(BASE + "/account/login/"); await p4.fill("#email", email); await p4.fill("#password", "NewPass456"); await p4.click("main button[type=submit]"); await p4.getByText("suspended").waitFor(); await p4.close();
+  const p4 = patch(await browser.newPage(ctxOpts)); await p4.goto(BASE + "/account/login/"); await p4.fill("#email", email); await p4.fill("#password", "NewPass456"); await p4.click("main button[type=submit]"); await p4.getByText("suspended").waitFor(); await p4.close();
 });
 await step("Non-staff cannot open admin", async () => { const r = await page.goto(BASE + "/admin"); expect(!page.url().includes("/admin") || r.status() >= 300, page.url()); });
 await step("SEO: recipe JSON-LD + canonical", async () => { const html = await (await ctx.request.get(BASE + recipePath)).text(); expect(html.includes('"@type":"Recipe"') && html.includes('rel="canonical"'), "missing"); });
-await step("Contact form submits", async () => { const p5 = patch(await browser.newPage()); await p5.goto(BASE + "/contact/"); await p5.fill("#c-name", "Test"); await p5.fill("#c-email", "t@example.test"); await p5.fill("#c-sub", "Hello there"); await p5.fill("#c-msg", "This is a test message."); await p5.click("button:has-text('Send Message')"); await p5.getByText("Thanks for reaching out").waitFor(); await p5.close(); });
-await step("Mobile: hamburger menu opens", async () => { const m = await browser.newContext({ viewport: { width: 390, height: 844 } }); const mp = patch(await m.newPage()); await mp.goto(BASE + "/"); await mp.click("[aria-label='Open menu'] >> nth=0"); expect(await mp.locator("[role=dialog] >> text=Dinners").isVisible(), "drawer"); await m.close(); });
+await step("Contact form submits", async () => { const p5 = patch(await browser.newPage(ctxOpts)); await p5.goto(BASE + "/contact/"); await p5.fill("#c-name", "Test"); await p5.fill("#c-email", "t@example.test"); await p5.fill("#c-sub", "Hello there"); await p5.fill("#c-msg", "This is a test message."); await p5.click("button:has-text('Send Message')"); await p5.getByText("Thanks for reaching out").waitFor(); await p5.close(); });
+await step("Mobile: hamburger menu opens", async () => { const m = await browser.newContext({ ...ctxOpts, viewport: { width: 390, height: 844 } }); const mp = patch(await m.newPage()); await mp.goto(BASE + "/"); await mp.click("[aria-label='Open menu'] >> nth=0"); expect(await mp.locator("[role=dialog] >> text=Dinners").isVisible(), "drawer"); await m.close(); });
 await step("No uncaught client errors", async () => { expect(!pageErrors.length, pageErrors.slice(0, 3).join(" | ")); });
 
 await browser.close();

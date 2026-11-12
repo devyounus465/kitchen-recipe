@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
 import { destroySession } from "@/lib/auth";
-export async function POST(req: Request) {
+// Relative Location so the redirect is correct behind proxies (Caddy/Nginx/Vercel),
+// where req.url holds the internal host (e.g. 0.0.0.0:3000) rather than the public domain.
+export async function POST() {
   await destroySession();
-  return NextResponse.redirect(new URL("/?loggedout=1", req.url), 303);
+  return new Response(null, { status: 303, headers: { Location: "/?loggedout=1" } });
 }
