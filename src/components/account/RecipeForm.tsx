@@ -41,7 +41,7 @@ export function RecipeForm({ r = {}, cats, admin, authors }: { r?: RecipeFormDat
       </section>
       <section className={sect}><h2 className="mb-1 text-[20px] font-extrabold">Ingredients *</h2><p className="mb-3 text-[14px] text-muted">One per line, e.g. <code className="rounded bg-tint px-1">1 1/2 cups all-purpose flour, sifted</code>. Quantities are scaled automatically.</p>
         <textarea name="ingredients" rows={10} defaultValue={r.ingredientsText} className="input font-mono text-[15px]" /><FieldError state={state} name="ingredients" /></section>
-      <section className={sect}><h2 className="mb-1 text-[20px] font-extrabold">Directions *</h2><p className="mb-3 text-[14px] text-muted">One step per line.</p>
+      <section className={sect}><h2 className="mb-1 text-[20px] font-extrabold">Directions *</h2><p className="mb-3 text-[14px] text-muted">One step per line.{admin && <> To add a step photo, put <code className="rounded bg-tint px-1">[image: https://…]</code> on the line after that step (upload it in the Media Library first).</>}</p>
         <textarea name="steps" rows={10} defaultValue={r.stepsText} className="input" /><FieldError state={state} name="steps" />
         <label className="label mt-4" htmlFor="rf-notes">Cook&apos;s note</label><textarea id="rf-notes" name="notes" rows={2} defaultValue={r.notes || ""} className="input" /></section>
       <section className={sect}><h2 className="mb-4 text-[20px] font-extrabold">Categories & Diet</h2>

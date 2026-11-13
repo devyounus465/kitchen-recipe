@@ -232,3 +232,19 @@ export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Editable site settings (CMS → Settings). One row per key, JSON value. */
+export const siteSettings = pgTable("site_settings", {
+  key: varchar("key", { length: 80 }).primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Permanent redirects so old URLs keep working after a slug change (SEO). Paths are site-relative. */
+export const redirects = pgTable("redirects", {
+  id: serial("id").primaryKey(),
+  fromPath: varchar("from_path", { length: 300 }).notNull().unique(),
+  toPath: varchar("to_path", { length: 300 }).notNull(),
+  hits: integer("hits").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

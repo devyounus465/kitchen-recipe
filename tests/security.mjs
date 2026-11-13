@@ -18,6 +18,26 @@ async function login(ctx, email, password, next = "") {
   await p.waitForLoadState("networkidle"); await p.waitForTimeout(500); return p;
 }
 
+// Staging mode: against a server started with STAGING_PASSWORD (pass the same value here),
+// only the private-staging checks run (every other request would need the password).
+if (process.env.STAGING_PASSWORD) {
+  await step("Private staging: password required, noindex, health open", async () => {
+    const noAuth = await fetch(BASE + "/"); expect(noAuth.status === 401, `no creds → ${noAuth.status}`);
+    const bad = await fetch(BASE + "/", { headers: { authorization: "Basic " + btoa("x:wrong") } }); expect(bad.status === 401, `wrong → ${bad.status}`);
+    const ok = await fetch(BASE + "/", { headers: { authorization: "Basic " + btoa("client:" + process.env.STAGING_PASSWORD) } });
+    expect(ok.status === 200 && /noindex/.test(ok.headers.get("x-robots-tag") || ""), `right → ${ok.status}`);
+    expect((await fetch(BASE + "/api/health/")).status === 200, "health blocked");
+  });
+  await step("Private staging: password guessing is blocked after 20 failures", async () => {
+    let status = 0;
+    for (let i = 0; i < 25 && status !== 429; i++) status = (await fetch(BASE + "/", { headers: { authorization: "Basic " + btoa("x:guess" + i) } })).status;
+    expect(status === 429, `last status ${status}`);
+  });
+  await browser.close();
+  for (const r of results) console.log(r.join("  "));
+  console.log(`\n${results.filter((r) => r[0] === "PASS").length} passed, ${failed} failed`); process.exit(failed ? 1 : 0);
+}
+
 await step("Security headers present (CSP, frame, nosniff)", async () => {
   const r = await fetch(BASE + "/"); const h = r.headers;
   expect(/default-src 'self'/.test(h.get("content-security-policy") || ""), "CSP missing");

@@ -6,12 +6,14 @@ import { db, pages, users } from "@/db";
 import { renderMarkdown } from "@/lib/markdown";
 import { Avatar } from "@/components/ui/Avatar";
 import { formatDate } from "@/lib/utils";
+import { followRedirect } from "@/lib/redirects";
 
 type P = { params: Promise<{ page: string }> };
 async function load(slug: string) { const [p] = await db.select().from(pages).where(eq(pages.slug, slug)); return p; }
 export async function generateMetadata({ params }: P): Promise<Metadata> { const p = await load((await params).page); return p ? { title: p.seoTitle || p.title, description: p.seoDescription || undefined } : {}; }
 export default async function CmsPage({ params }: P) {
-  const p = await load((await params).page); if (!p) notFound();
+  const { page } = await params; const p = await load(page);
+  if (!p) { await followRedirect(`/${page}/`); notFound(); }
   const editors = p.slug === "about-us" ? await db.select().from(users).where(eq(users.isStaff, true)) : [];
   return (
     <div className="container-site pt-10">

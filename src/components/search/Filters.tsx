@@ -9,7 +9,7 @@ export function Filters({ categories, mode }: { categories: { slug: string; name
   const sp = useSearchParams(); const router = useRouter(); const [open, setOpen] = useState(false);
   const [ing, setIng] = useState(sp.get("ingredient") || ""); const [ex, setEx] = useState(sp.get("exclude") || "");
   const diets = sp.getAll("diet");
-  function update(mut: (q: URLSearchParams) => void) { const q = new URLSearchParams(sp.toString()); q.delete("page"); mut(q); router.push(`/search/?${q}`); }
+  function update(mut: (q: URLSearchParams) => void) { window.dispatchEvent(new Event("simmerly:navstart")); const q = new URLSearchParams(sp.toString()); q.delete("page"); mut(q); router.push(`/search/?${q}`); }
   const active = ["ingredient", "exclude", "maxTime", "diet", "category"].some((k) => sp.get(k));
   const body = (
     <div className="space-y-7">
@@ -56,7 +56,7 @@ export function SortSelect({ value }: { value: string }) {
   const sp = useSearchParams(); const router = useRouter();
   return (
     <label className="flex items-center gap-2 text-[15px]"><span className="hidden sm:inline">Sort by</span>
-      <select value={value} onChange={(e) => { const q = new URLSearchParams(sp.toString()); q.set("sort", e.target.value); q.delete("page"); router.push(`/search/?${q}`); }} className="input h-10 w-auto py-1">
+      <select aria-label="Sort results" value={value} onChange={(e) => { window.dispatchEvent(new Event("simmerly:navstart")); const q = new URLSearchParams(sp.toString()); q.set("sort", e.target.value); q.delete("page"); router.push(`/search/?${q}`); }} className="input h-10 w-auto py-1">
         <option value="relevance">Relevance</option><option value="rating">Top rated</option><option value="newest">Newest</option><option value="popular">Most popular</option>
       </select>
     </label>

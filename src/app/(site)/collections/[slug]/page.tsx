@@ -8,6 +8,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { CardGrid } from "@/components/recipe/RecipeCard";
 import { ShareButton } from "@/components/recipe/ShareButton";
 import Link from "next/link";
+import { followRedirect } from "@/lib/redirects";
 
 type P = { params: Promise<{ slug: string }> };
 async function load(slug: string) {
@@ -19,7 +20,8 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
   return { title: x.c.seoTitle || x.c.name, description: x.c.seoDescription || x.c.description || undefined };
 }
 export default async function CollectionPage({ params }: P) {
-  const x = await load((await params).slug); if (!x) notFound();
+  const { slug } = await params; const x = await load(slug);
+  if (!x) { await followRedirect(`/collections/${slug}/`); notFound(); }
   const user = await getUser(); const [cards, saved] = await Promise.all([collectionCards(x.c.id), savedIdSet(user?.id)]);
   return (
     <div className="container-site pt-8">

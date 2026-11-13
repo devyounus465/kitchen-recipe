@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { db, users, passwordResets, collections, collectionRecipes, recipes, recipeCategories, categories } from "@/db";
 import { createSession, destroySession, getUser, isStaffRole, safeNext } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
+import { issuePasswordReset } from "@/lib/password-reset";
 import { saveFile } from "@/lib/storage";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 import { slugify } from "@/lib/utils";
@@ -55,11 +56,7 @@ export async function forgotPassword(_: FormState, fd: FormData): Promise<FormSt
   if (!z.string().email().safeParse(email).success) return { error: "Please enter a valid email address." };
   if (!rateLimit(`forgot:${await ip()}`, 5) || !rateLimit(`forgot-acct:${email}`, 3)) return { error: "Too many requests. Please try again later." };
   const [u] = await db.select().from(users).where(eq(users.email, email));
-  if (u) {
-    const token = crypto.randomBytes(32).toString("hex");
-    await db.insert(passwordResets).values({ userId: u.id, tokenHash: crypto.createHash("sha256").update(token).digest("hex"), expiresAt: new Date(Date.now() + 60 * 60 * 1000) });
-    await sendEmail(u.email, "Reset your password", `Hi ${u.name},\n\nReset your password (link valid for 1 hour):\n${SITE.url}/account/reset-password/?token=${token}\n\nIf you didn't request this, ignore this email.`);
-  }
+  if (u) await issuePasswordReset(u);
   return { ok: true, message: "If an account exists for that email, we've sent a password reset link. It expires in 1 hour." };
 }
 
@@ -165,7 +162,14 @@ export async function saveRecipe(_: FormState, fd: FormData): Promise<FormState>
   if (!p.success) return { error: "Please fix the errors below.", fieldErrors: errs(p.error) };
   const d = p.data;
   const ingredients = d.ingredients.split("\n").map(parseIngredientLine).filter(Boolean) as NonNullable<ReturnType<typeof parseIngredientLine>>[];
-  const steps = d.steps.split(/\n\s*\n|\n/).map((t) => t.trim()).filter(Boolean).map((text) => ({ text }));
+  // One step per line. Staff may attach a photo to the previous step with a line "[image: https://… or /media/…]".
+  const steps: { text: string; image?: string }[] = [];
+  for (const line of d.steps.split("\n").map((t) => t.trim()).filter(Boolean)) {
+    const img = line.match(/^\[image:\s*(\S+)\s*\]$/i);
+    if (img) { if (staff && steps.length && /^(https:\/\/|\/media\/)\S+$/.test(img[1])) steps[steps.length - 1].image = img[1]; continue; }
+    steps.push({ text: line.slice(0, 3000) });
+  }
+  if (!steps.length) return { error: "Please fix the errors below.", fieldErrors: { steps: "Add at least one step." } };
   let imageUrl = existing?.imageUrl ?? null;
   const file = fd.get("image");
   if (file instanceof File && file.size) { try { imageUrl = (await saveFile(file)).url; } catch (e) { return { error: (e as Error).message, fieldErrors: { image: (e as Error).message } }; } }

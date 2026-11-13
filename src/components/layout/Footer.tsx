@@ -3,7 +3,7 @@ import { Logo } from "./Logo";
 import { Newsletter } from "./Newsletter";
 import { navTree } from "@/lib/queries";
 import { categoryUrl } from "@/lib/utils";
-import { SITE } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
 
 const SOCIAL: [string, string][] = [
   ["Facebook", "M14 8h3V4h-3a4 4 0 0 0-4 4v2H8v4h2v8h4v-8h3l1-4h-4V8z"],
@@ -14,17 +14,18 @@ const SOCIAL: [string, string][] = [
 ];
 
 export async function Footer() {
-  const tree = await navTree();
+  const [tree, settings] = await Promise.all([navTree(), getSettings()]);
+  const social = settings.social as Record<string, string>;
   return (
     <footer className="no-print mt-20 bg-ink text-white">
       <div className="container-site grid gap-10 py-12 lg:grid-cols-[1.2fr_2fr]">
         <div>
           <Link href="/" className="text-[36px]"><Logo light /></Link>
-          <p className="mt-3 max-w-sm text-[16px] text-white/75">Recipes, reviews and cooking inspiration from home cooks like you.</p>
-          {SOCIAL.some(([n]) => SITE.social[n]) && <ul className="mt-5 flex gap-3">
-            {SOCIAL.filter(([n]) => SITE.social[n]).map(([n, d]) => <li key={n}><a href={SITE.social[n]} target="_blank" rel="noopener noreferrer" aria-label={`Simmerly on ${n}`} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-brand"><svg viewBox="0 0 24 24" className="h-5 w-5 fill-white"><path d={d} /></svg></a></li>)}
+          <p className="mt-3 max-w-sm text-[16px] text-white/75">{settings.footerAbout}</p>
+          {SOCIAL.some(([n]) => social[n]) && <ul className="mt-5 flex gap-3">
+            {SOCIAL.filter(([n]) => social[n]).map(([n, d]) => <li key={n}><a href={social[n]} target="_blank" rel="noopener noreferrer" aria-label={`Simmerly on ${n}`} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-brand"><svg viewBox="0 0 24 24" className="h-5 w-5 fill-white"><path d={d} /></svg></a></li>)}
           </ul>}
-          <div className="mt-8"><Newsletter dark /></div>
+          <div className="mt-8"><Newsletter dark title={settings.newsletterTitle} subtitle={settings.newsletterSubtitle} /></div>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           {tree.slice(0, 3).map((g) => (

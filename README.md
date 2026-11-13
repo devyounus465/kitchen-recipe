@@ -4,7 +4,9 @@ Next.js 15 · React 19 · TypeScript · Tailwind · PostgreSQL 16 · Drizzle ORM
 
 - **[docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md)**: brief → feature matrix, architecture, data model, milestones
 - **[docs/DEPLOY_HOSTINGER.md](docs/DEPLOY_HOSTINGER.md)**: production deployment (VPS + Docker + HTTPS)
-- **[SECURITY.md](SECURITY.md)**: security model
+- **[SECURITY.md](SECURITY.md)**: security model and threat review
+- **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)**: test results (functional, security, Lighthouse)
+- **[docs/PROPOSAL.md](docs/PROPOSAL.md)**: proposal template for the client (brief §11)
 
 ## Easiest: one command (no PostgreSQL install needed)
 
@@ -59,8 +61,10 @@ CMS: **/admin**.
 | `npm run db:seed` | Reset content tables and load demo data |
 | `npm run db:reset` | Drop everything, push schema, seed |
 | `npm run create-admin` | Create/promote an administrator (use this for a real launch) |
-| `npm run import -- file.json` | Bulk-import recipes/articles (see `scripts/sample-import.json`) |
-| `npm run test:e2e` | Playwright end-to-end suite against a running server (`BASE_URL` env) |
+| `npm run import -- file.json` | Bulk-import categories, recipes, articles, videos (format: `scripts/sample-import.json`; also Admin → Bulk Import) |
+| `npm run test:e2e` | Functional end-to-end suite against a running, seeded server (`BASE_URL`) |
+| `npm run test:security` | Security regression suite (`STAGING_PASSWORD` also tests private staging) |
+| `npm run videos:demo` | Regenerate the original demo videos in `public/videos/` (needs ffmpeg) |
 | `deploy/backup.sh` / `deploy/restore.sh` | Docker: database dump + uploads archive (14-day rotation) / restore |
 
 ## Free hosting: Vercel + Neon
@@ -85,6 +89,17 @@ Install cloudflared on Windows with `winget install --id Cloudflare.cloudflared`
 The link works while your computer and both terminals stay on, and it changes on each restart.
 Tunnel domains are pre-allowed for form submissions in `next.config.mjs` (extend with `ALLOWED_ORIGINS`).
 
+## Private staging (brief §12)
+
+Set `STAGING_PASSWORD` (in `.env` or the hosting settings) and restart: every page then asks for a
+password (any username) and is hidden from search engines. Remove it for the public launch.
+
+## Public API (read-only)
+
+`GET /api/v1/recipes/?q=&ingredient=&maxTime=&diet=&category=&sort=&page=&limit=` ·
+`GET /api/v1/recipes/{id}/` · `GET /api/v1/categories/`. Published content only, 120 requests/minute
+per IP, CORS enabled. Intended for a future mobile app or partner integrations.
+
 ## Production deployment (VPS, e.g. Hostinger)
 
 Docker Compose runs PostgreSQL + app + Caddy (automatic HTTPS). Full step-by-step guide:
@@ -94,16 +109,17 @@ Docker Compose runs PostgreSQL + app + Caddy (automatic HTTPS). Full step-by-ste
 cp deploy/env.example .env   # DOMAIN, POSTGRES_PASSWORD, AUTH_SECRET
 docker compose up -d --build
 docker compose exec app npm run db:push
+docker compose exec app npm run create-admin
 ```
 
 ### Swappable adapters
-- **Media storage** — `src/lib/storage.ts` (local disk → S3/R2)
-- **Email** — `src/lib/email.ts` (outbox table → SMTP/Resend). Until configured, emails (incl. password resets) appear in **Admin → Email outbox**.
-- **Search** — `searchRecipes()` in `src/lib/queries.ts` (Postgres FTS → Meilisearch/Typesense)
-- **Rate limiting** — `src/lib/ratelimit.ts` (in-memory → Redis for multi-instance)
+- **Media storage**: `src/lib/storage.ts` (local disk or Vercel Blob)
+- **Email**: `src/lib/email.ts` (SMTP via `SMTP_*`; every email is also logged in **Admin → Email outbox**)
+- **Search**: `searchRecipes()` in `src/lib/queries.ts` (Postgres FTS → Meilisearch/Typesense)
+- **Rate limiting**: `src/lib/ratelimit.ts` (in-memory → Redis for multi-instance)
 
 ## Content & licensing
 Demo recipes, articles and reviews are original text written for this project. Demo photos are hot-linked from
-Unsplash (free licence) and should be replaced with client-approved assets. **No Allrecipes text, photos, video,
-logo or trademarks are used** (brief §8). Seeded videos have thumbnails only — upload licensed MP4s or link
-YouTube/Vimeo via Admin → Videos.
+Unsplash (free licence) and should be replaced with client-approved assets. Demo videos are original
+step-by-step clips generated from the demo recipes. **No Allrecipes text, photos, video, logo or trademarks are
+used** (brief §8). Replace or add videos (MP4 upload or YouTube/Vimeo link) in Admin → Videos.

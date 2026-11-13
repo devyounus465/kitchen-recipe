@@ -25,12 +25,22 @@ The client IP is taken from the last `X-Forwarded-For` hop (set by our own proxy
   external links get `rel="nofollow noopener noreferrer"`.
 - Uploads: JPG/PNG/WebP/GIF (+MP4 on self-hosted), type checked by magic bytes, 4 MB image limit, random
   file names; served with `nosniff` and a sandboxing CSP. No SVG/HTML uploads.
-- New reviews containing links and all user photos/recipe submissions go through moderation.
+- User photos and recipe submissions always go through moderation; reviews follow the mode set in Admin → Settings
+  (hold reviews with links by default, hold all, or publish immediately).
 
 ## Authorization
 - `/admin` requires editor or admin; user role/ban management requires admin; admins can't demote or ban themselves.
 - Members can only edit/delete their own drafts, pending or rejected recipes, collections and reviews.
 - Admin form values are whitelisted (status, type, kind); referenced users/recipes/categories are verified.
+
+## Private staging, API and CMS additions
+- `STAGING_PASSWORD`: site-wide password (constant-time comparison, max 20 wrong attempts per IP per
+  10 minutes), `noindex` on every response; only `/api/health/` stays open for monitoring.
+- Public API `/api/v1/*`: read-only, published content only, no cookies or private fields (no emails),
+  120 requests/minute per IP, page size ≤ 50.
+- Bulk import (staff only): 5 MB limit, every field validated, URLs restricted to `https://`, `/media/`, `/videos/`.
+- URL redirects: site-relative paths only (no open redirects); chains and loops are rejected.
+- User invitations: the account gets an unusable random password plus a single-use 72-hour set-password link.
 
 ## HTTP headers
 Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy,
@@ -41,6 +51,27 @@ Cross-Origin-Opener-Policy; HSTS via Caddy (VPS) or Vercel.
 - Daily database + uploads backups (`deploy/backup.sh`), health endpoint `/api/health/`.
 - Dependencies: `npm audit --omit=dev` reports 0 known vulnerabilities. One moderate dev-only advisory remains
   (esbuild inside drizzle-kit's CLI; its dev server is never used).
+
+## Threat review
+
+| Threat | Mitigation | Verified by |
+|---|---|---|
+| Password guessing / credential stuffing | bcrypt, per-account and per-IP limits, same timing for unknown emails | `tests/security.mjs` |
+| Stolen session cookie after password change | `session_version` revocation, httpOnly + Secure cookie | `tests/security.mjs` |
+| Forged/altered session token | HS256 signature, algorithm pinned, strong secret enforced at startup | `tests/security.mjs`, Docker test |
+| Phishing via open redirect | `safeNext()` and site-relative redirects only | `tests/security.mjs` |
+| CSRF | SameSite cookies, Next.js origin check on actions, cross-site check on API routes | `tests/security.mjs` |
+| Stored XSS (reviews, profiles, CMS text) | React escaping, escaped markdown, CSP | code review, CSP check |
+| Malicious uploads | Type + magic-byte checks, no SVG/HTML, random names, `nosniff` + sandbox CSP | code review |
+| Privilege escalation | Role checks on every admin action, admin-only user management, whitelisted inputs | `tests/security.mjs`, e2e |
+| Data exposure via API | Explicit field mapping, published-only queries | e2e |
+| Staging leak / indexing | Basic auth + `noindex`, brute-force limit | `tests/security.mjs` (with `STAGING_PASSWORD`) |
+| Spam (reviews, contact, newsletter) | Rate limits, honeypot, moderation modes | code review |
+| Data loss | Daily backups, seed guard, health checks | Docker test |
+
+Known limits: rate limits are in memory, per server instance (use Redis if you run several instances);
+the CSP allows inline scripts because Next.js hydration needs them; search queries are not rate limited
+(add a proxy-level limit in Caddy if abused).
 
 ## Reporting
 Please report vulnerabilities privately to the site owner rather than opening a public issue.

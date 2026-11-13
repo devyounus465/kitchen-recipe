@@ -12,7 +12,7 @@ type U = { name: string; username: string; staff: boolean } | null;
 function SearchBox({ compact, autoFocus, onDone }: { compact?: boolean; autoFocus?: boolean; onDone?: () => void }) {
   const router = useRouter(); const [q, setQ] = useState("");
   return (
-    <form role="search" action="/search/" onSubmit={(e) => { e.preventDefault(); router.push(`/search/?q=${encodeURIComponent(q.trim())}`); onDone?.(); }}
+    <form role="search" action="/search/" onSubmit={(e) => { e.preventDefault(); window.dispatchEvent(new Event("simmerly:navstart")); router.push(`/search/?q=${encodeURIComponent(q.trim())}`); onDone?.(); }}
       className={cn("flex items-center overflow-hidden rounded-full border border-[#8a8a8a] bg-white focus-within:border-ink focus-within:ring-2 focus-within:ring-brand/25", compact ? "h-10" : "h-11")}>
       <label htmlFor={compact ? "q2" : "q1"} className="sr-only">Search recipes</label>
       <input id={compact ? "q2" : "q1"} name="q" value={q} onChange={(e) => setQ(e.target.value)} autoFocus={autoFocus} autoComplete="off"
@@ -107,10 +107,10 @@ export function HeaderClient({ items, user }: { items: NavItem[]; user: U }) {
       </div>
 
       {/* sticky compact header on scroll (mirrors reference behavior) */}
-      <div className={cn("fixed inset-x-0 top-0 z-50 border-b border-rule bg-white shadow-[0_2px_10px_rgba(0,0,0,.08)] transition-transform duration-300", stuck ? "translate-y-0" : "-translate-y-full")} aria-hidden={!stuck}>
+      <div className={cn("fixed inset-x-0 top-0 z-50 border-b border-rule bg-white shadow-[0_2px_10px_rgba(0,0,0,.08)] transition-transform duration-300", stuck ? "translate-y-0" : "-translate-y-full")} inert={!stuck}>
         <div className="container-site flex h-[60px] items-center gap-3">
-          <button className="-ml-2 p-2 lg:hidden" onClick={() => setMobile(true)} aria-label="Open menu" tabIndex={stuck ? 0 : -1}><Menu className="h-6 w-6" /></button>
-          <Link href="/" className="text-[26px]" tabIndex={stuck ? 0 : -1}><Logo /></Link>
+          <button className="-ml-2 p-2 lg:hidden" onClick={() => setMobile(true)} aria-label="Open menu"><Menu className="h-6 w-6" /></button>
+          <Link href="/" className="text-[26px]"><Logo /></Link>
           <nav className="hidden flex-1 xl:block [&_a]:px-2.5 [&_a]:py-[18px] [&_a]:text-[13px]">{stuck && navRow}</nav>
           <div className="ml-auto w-[240px] max-w-[50vw] xl:ml-0 xl:w-[220px]"><SearchBox compact /></div>
         </div>

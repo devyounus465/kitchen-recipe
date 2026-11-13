@@ -66,7 +66,7 @@ await step("Register new account", async () => {
 });
 await step("Register validation errors", async () => {
   const p2 = patch(await browser.newPage(ctxOpts)); await p2.goto(BASE + "/account/register/"); await p2.fill("#name", "X"); await p2.fill("#email", "bad"); await p2.fill("#password", "short"); await p2.click("main button[type=submit]");
-  await p2.waitForSelector("[role=alert]"); expect(await p2.getByText("valid email").count(), "no email error"); await p2.close();
+  await p2.getByText("valid email").first().waitFor(); await p2.close();
 });
 // 5. Save, collection, review, photo
 const recipePath = "/recipe/6/diner-style-smash-burgers/";
@@ -134,9 +134,68 @@ await step("Admin: ban user blocks login", async () => {
   await ap.goto(BASE + "/admin/users?q=" + encodeURIComponent(email)); await ap.click("text=E2E Tester"); await ap.selectOption("select[name=status]", "banned"); await ap.click("button:has-text('Save')"); await ap.getByText("User updated").waitFor();
   const p4 = patch(await browser.newPage(ctxOpts)); await p4.goto(BASE + "/account/login/"); await p4.fill("#email", email); await p4.fill("#password", "NewPass456"); await p4.click("main button[type=submit]"); await p4.getByText("suspended").waitFor(); await p4.close();
 });
+await step("Admin: settings update footer text + social link", async () => {
+  await ap.goto(BASE + "/admin/settings"); await ap.fill("#footerAbout", `Footer text ${stamp}`); await ap.fill("#so-Instagram", "https://instagram.com/simmerly-demo");
+  await ap.click("button:has-text('Save settings')"); await ap.getByText("Settings saved").waitFor();
+  const html = await (await ap.request.get(BASE + "/")).text(); expect(html.includes(`Footer text ${stamp}`) && html.includes("instagram.com/simmerly-demo"), "footer not updated");
+});
+await step("Admin: changing an article URL keeps the old URL working (301/308)", async () => {
+  await ap.goto(BASE + "/admin/articles"); await ap.click(`text=Test Article ${stamp}`); await ap.waitForURL(/admin\/articles\/\d+/);
+  await ap.fill("input[name=slug]", `renamed-article-${stamp}`); await ap.click("button:has-text('Save article')"); await ap.getByText("Article saved").waitFor();
+  const r = await ap.request.get(BASE + `/article/test-article-${stamp}/`, { maxRedirects: 0 }); expect([301, 308].includes(r.status()), `status ${r.status()}`);
+  expect((r.headers().location || "").includes(`/article/renamed-article-${stamp}/`), r.headers().location);
+  await ap.goto(BASE + "/admin/redirects"); expect(await ap.getByText(`/article/test-article-${stamp}/`).count(), "redirect not listed");
+});
+await step("Admin: bulk import JSON creates draft recipe", async () => {
+  await ap.goto(BASE + "/admin/import");
+  await ap.fill("#json", JSON.stringify({ recipes: [{ title: `Imported Soup ${stamp}`, ingredients: ["1 cup water"], steps: ["Boil."], status: "draft" }] }));
+  await ap.click("button:has-text('Import')"); await ap.getByText("Imported 1").waitFor();
+  await ap.goto(BASE + `/admin/recipes?q=${encodeURIComponent("Imported Soup " + stamp)}`); expect(await ap.getByText(`Imported Soup ${stamp}`).count(), "imported recipe missing");
+});
+await step("Admin: import rejects invalid JSON shape", async () => {
+  await ap.goto(BASE + "/admin/import"); await ap.fill("#json", JSON.stringify({ recipes: [{ title: "x" }] })); await ap.click("button:has-text('Import')"); await ap.getByText("Nothing imported").waitFor();
+});
+await step("Admin: invite a new author (email with set-password link)", async () => {
+  await ap.goto(BASE + "/admin/users"); await ap.click("text=+ New user or author");
+  await ap.fill("#nu-name", "Invited Editor"); await ap.fill("#nu-email", `editor${stamp}@example.test`); await ap.click("button:has-text('Create & send invitation')");
+  await ap.waitForURL(/admin\/users\/\d+\/?\?created=1/); await ap.goto(BASE + "/admin/outbox");
+  const first = await ap.locator("pre").first().innerText(); expect(/reset-password\/\?token=\w+/.test(first), "no invitation link in outbox");
+});
+await step("Admin: community photos page lists photos", async () => { await ap.goto(BASE + "/admin/photos"); expect(await ap.locator("text=Community photos").count() && await ap.locator("button:has-text('Delete')").count() > 0, "no photos"); });
+await step("Admin: step photo saved via [image: …] line", async () => {
+  await ap.goto(BASE + "/admin/recipes/1"); const steps = await ap.inputValue("textarea[name=steps]");
+  const lines = steps.split("\n"); lines.splice(1, 0, "[image: https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=900]");
+  await ap.fill("textarea[name=steps]", lines.join("\n")); await ap.click("button:has-text('Save Recipe')"); await ap.waitForURL(/saved=1/);
+  const html = await (await ap.request.get(BASE + "/recipe/1/chewy-brown-butter-chocolate-chip-cookies/")).text(); expect(html.includes('alt="Step 1"'), "step image not rendered");
+});
+await step("Video page plays a real video file", async () => {
+  await page.goto(BASE + "/video/1/how-to-make-fluffy-buttermilk-pancakes/"); await page.click("button[aria-label^='Play']");
+  const src = await page.locator("video").getAttribute("src"); expect(src && src.endsWith(".mp4"), `src ${src}`);
+  const r = await ctx.request.get(BASE + src); expect(r.status() === 200 && (r.headers()["content-type"] || "").includes("video/mp4"), `video ${r.status()}`);
+});
+await step("Public API v1: search, detail, categories", async () => {
+  const list = await (await ctx.request.get(BASE + "/api/v1/recipes/?q=salmon&limit=5")).json(); expect(list.data?.[0]?.title.includes("Salmon"), JSON.stringify(list).slice(0, 120));
+  const one = await ctx.request.get(BASE + `/api/v1/recipes/${list.data[0].id}/`); const d = await one.json(); expect(one.status() === 200 && d.ingredients.length && d.steps.length && !JSON.stringify(d).includes("@"), "detail");
+  const pending = await ctx.request.get(BASE + "/api/v1/recipes/41/"); expect(pending.status() === 404, `unpublished recipe exposed: ${pending.status()}`);
+  const cats = await (await ctx.request.get(BASE + "/api/v1/categories/")).json(); expect(cats.data.length >= 5, "categories");
+});
 await step("Non-staff cannot open admin", async () => { const r = await page.goto(BASE + "/admin"); expect(!new URL(page.url()).pathname.startsWith("/admin"), page.url()); });
 await step("SEO: recipe JSON-LD + canonical", async () => { const html = await (await ctx.request.get(BASE + recipePath)).text(); expect(html.includes('"@type":"Recipe"') && html.includes('rel="canonical"'), "missing"); });
 await step("Contact form submits", async () => { const p5 = patch(await browser.newPage(ctxOpts)); await p5.goto(BASE + "/contact/"); await p5.fill("#c-name", "Test"); await p5.fill("#c-email", "t@example.test"); await p5.fill("#c-sub", "Hello there"); await p5.fill("#c-msg", "This is a test message."); await p5.click("button:has-text('Send Message')"); await p5.getByText("Thanks for reaching out").waitFor(); await p5.close(); });
+await step("Responsive: no horizontal overflow (phone, tablet portrait/landscape, desktop)", async () => {
+  const bad = [];
+  for (const [w, h] of [[390, 844], [768, 1024], [1024, 768], [1366, 900]]) {
+    const c = await browser.newContext({ ...ctxOpts, viewport: { width: w, height: h } });
+    await c.route("**/images.unsplash.com/**", (r) => r.fulfill({ contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg'/>" }));
+    const p = patch(await c.newPage());
+    for (const u of ["/", "/recipe/6/diner-style-smash-burgers/", "/recipes/2/dinners/", "/search/?q=chicken", "/article/how-to-brown-butter-and-why-you-should/", "/videos/", "/account/login/"]) {
+      await p.goto(BASE + u); const over = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      if (over > 1) bad.push(`${u} @${w}px (+${over}px)`);
+    }
+    await c.close();
+  }
+  expect(!bad.length, bad.join(", "));
+});
 await step("Mobile: hamburger menu opens", async () => { const m = await browser.newContext({ ...ctxOpts, viewport: { width: 390, height: 844 } }); const mp = patch(await m.newPage()); await mp.goto(BASE + "/"); await mp.click("[aria-label='Open menu'] >> nth=0"); expect(await mp.locator("[role=dialog] >> text=Dinners").isVisible(), "drawer"); await m.close(); });
 await step("No uncaught client errors", async () => { expect(!pageErrors.length, pageErrors.slice(0, 3).join(" | ")); });
 

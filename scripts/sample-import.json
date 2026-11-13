@@ -1,4 +1,17 @@
-{ "recipes": [ { "title": "Sample Imported Granola", "description": "Crunchy maple-pecan granola for the week ahead.", "prepMin": 10, "cookMin": 30, "servings": 8,
-  "ingredients": ["3 cups rolled oats", "1 cup chopped pecans", "1/3 cup maple syrup", "1/4 cup olive oil", "1/2 teaspoon salt"],
-  "steps": ["Preheat oven to 325°F.", "Toss everything together and spread on a sheet pan.", "Bake 30 minutes, stirring halfway. Cool completely."],
-  "categories": ["breakfast-and-brunch"], "diets": ["vegan", "vegetarian"], "author": "maya-thornton", "status": "draft" } ] }
+{
+  "categories": [
+    { "name": "Granola & Cereal", "parent": "meals", "description": "Homemade granola, muesli and breakfast cereals." }
+  ],
+  "recipes": [
+    { "title": "Sample Imported Granola", "description": "Crunchy maple-pecan granola for the week ahead.", "prepMin": 10, "cookMin": 30, "servings": 8,
+      "ingredients": ["3 cups rolled oats", "1 cup chopped pecans", "1/3 cup maple syrup", "1/4 cup olive oil", "1/2 teaspoon salt"],
+      "steps": ["Preheat oven to 325°F.", "Toss everything together and spread on a sheet pan.", "Bake 30 minutes, stirring halfway. Cool completely."],
+      "categories": ["granola-and-cereal", "breakfast-and-brunch"], "diets": ["vegan", "vegetarian"], "author": "maya-thornton", "status": "draft" }
+  ],
+  "articles": [
+    { "title": "Sample Imported Guide: Storing Granola", "kind": "guide", "dek": "Keep it crunchy for weeks.", "body": "## Airtight is everything\nStore cooled granola in a sealed jar.", "author": "maya-thornton", "status": "draft" }
+  ],
+  "videos": [
+    { "title": "Sample Imported Video", "description": "Add the video file or a YouTube/Vimeo link in Admin → Videos.", "recipe": "sample-imported-granola", "status": "draft" }
+  ]
+}

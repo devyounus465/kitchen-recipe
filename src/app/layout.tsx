@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Source_Sans_3 } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
+import { NavProgress } from "@/components/layout/NavProgress";
 import { SITE } from "@/lib/site";
 
 const sans = Source_Sans_3({ subsets: ["latin"], weight: ["400", "600", "700", "800", "900"], variable: "--font-sans", display: "swap" });
@@ -15,5 +17,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#ce4620", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" className={sans.variable}><body className="font-sans">{children}</body></html>;
+  return <html lang="en" className={sans.variable}><body className="font-sans"><Suspense><NavProgress /></Suspense>{children}</body></html>;
 }

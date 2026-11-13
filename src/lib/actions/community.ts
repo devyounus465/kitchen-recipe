@@ -6,6 +6,7 @@ import { getUser } from "@/lib/auth";
 import { saveFile } from "@/lib/storage";
 import { refreshRecipeStats } from "@/lib/stats";
 import { rateLimit } from "@/lib/ratelimit";
+import { getSettings } from "@/lib/settings";
 import type { FormState } from "./public";
 
 export async function submitReview(_: FormState, fd: FormData): Promise<FormState> {
@@ -18,7 +19,8 @@ export async function submitReview(_: FormState, fd: FormData): Promise<FormStat
   if (!r) return { error: "Recipe not found." };
   if (r.authorId === user.id) return { error: "You can't rate your own recipe." };
   // Simple auto-moderation: links get held for review.
-  const status = /https?:\/\//i.test(body) ? "pending" : "approved";
+  const mode = (await getSettings()).reviewModeration;
+  const status = mode === "all" || (mode === "links" && /https?:\/\/|www\./i.test(body)) ? "pending" : "approved";
   await db.insert(reviews).values({ recipeId, userId: user.id, rating, body, status })
     .onConflictDoUpdate({ target: [reviews.userId, reviews.recipeId], set: { rating, body, status, updatedAt: new Date() } });
   await refreshRecipeStats(recipeId);

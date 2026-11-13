@@ -303,6 +303,9 @@ export const ARTICLES: { kind: "article" | "guide" | "news"; title: string; dek:
     body: "## Steps\n1. Cut the onion in half through the root, then peel.\n2. Lay one half flat. Make vertical cuts toward — but not through — the root.\n3. Make one or two horizontal cuts parallel to the board.\n4. Slice across to release perfect dice.\n\n## Fewer tears\nUse a very sharp knife and chill the onion for 10 minutes first." },
 ];
 
+/** Recipes that get a demo video (indexes into RECIPES). */
+export const DEMO_VIDEO_RECIPES = [3, 0, 5, 7, 12, 14, 19, 37];
+
 export const REVIEW_TEXT: Record<number, string[]> = {
   5: ["Absolutely delicious! My whole family asked for seconds. This is going into our regular rotation.", "Followed the recipe exactly and it was perfect. Clear directions and great results.", "Best version of this I've ever made. I doubled the garlic because we love it.", "Made this for guests and everyone wanted the recipe. Easy and impressive.", "So good! I've made it three times this month already."],
   4: ["Really tasty. I added a little extra seasoning but otherwise loved it.", "Great recipe, though mine needed a few more minutes in the oven.", "Very good and easy. Next time I'll add some fresh herbs at the end.", "Solid weeknight recipe. Kids loved it."],

@@ -11,5 +11,5 @@ export async function formCategories() {
 }
 export async function recipeToForm(r: typeof recipes.$inferSelect): Promise<RecipeFormData> {
   const cats = await db.select({ id: recipeCategories.categoryId }).from(recipeCategories).where(eq(recipeCategories.recipeId, r.id));
-  return { ...r, ingredientsText: r.ingredients.map(ingredientToLine).join("\n"), stepsText: r.steps.map((s) => s.text).join("\n"), categoryIds: cats.map((c) => c.id), nutrition: r.nutrition as Record<string, number | undefined> | null };
+  return { ...r, ingredientsText: r.ingredients.map(ingredientToLine).join("\n"), stepsText: r.steps.map((s) => (s.image ? `${s.text}\n[image: ${s.image}]` : s.text)).join("\n"), categoryIds: cats.map((c) => c.id), nutrition: r.nutrition as Record<string, number | undefined> | null };
 }

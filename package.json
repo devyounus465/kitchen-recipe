@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "test:e2e": "node tests/e2e.mjs",
     "create-admin": "tsx scripts/create-admin.ts",
-    "test:security": "node tests/security.mjs"
+    "test:security": "node tests/security.mjs",
+    "videos:demo": "tsx scripts/make-demo-videos.ts"
   },
   "dependencies": {
     "@vercel/blob": "2.8.2",

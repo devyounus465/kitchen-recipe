@@ -60,14 +60,16 @@ export default async function RecipePage({ params, searchParams }: P) {
     aggregateRating: r.ratingCount ? { "@type": "AggregateRating", ratingValue: r.ratingAvg.toFixed(1), ratingCount: r.ratingCount } : undefined,
   };
   const canEdit = user && (user.id === r.authorId || isStaffRole(user.role));
+  const trail = parent && primary ? [crumbs[0], { href: categoryUrl(parent), label: parent.name }, crumbs[1]] : crumbs;
+  const breadcrumbLd = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [...trail, { href: path, label: r.title }].map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.label, item: SITE.url + c.href })) };
 
   return (
     <article className="container-site pt-6 md:pt-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, breadcrumbLd]).replace(/</g, "\\u003c") }} />
       {r.status !== "published" && <div className="no-print mb-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-[15px] font-semibold text-amber-900">Preview — this recipe is <b>{r.status}</b> and not visible to the public.</div>}
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0 max-w-[760px]">
-          <Breadcrumbs items={parent && primary ? [crumbs[0], { href: categoryUrl(parent), label: parent.name }, crumbs[1]] : crumbs} />
+          <Breadcrumbs items={trail} />
           <h1 className="text-[34px] font-extrabold leading-[1.1] tracking-[-0.015em] md:text-[44px]">{r.title}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px]">
             {r.ratingCount > 0 ? <><span className="flex items-center gap-1.5 font-bold text-ink"><Stars value={r.ratingAvg} size={18} /> {r.ratingAvg.toFixed(1)} ({compact(r.ratingCount)})</span>

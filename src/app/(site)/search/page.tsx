@@ -44,6 +44,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
       <div className="mt-8 grid gap-10 lg:grid-cols-[240px_1fr]">
         <div className="hidden lg:block"><Suspense><Filters categories={cats} mode="desktop" /></Suspense></div>
         <div>
+          <h2 className="sr-only">Search results</h2>
           {res.rows.length ? <CardGrid cards={res.rows} saved={saved} loggedIn={!!user} cols={3} /> :
             <EmptyState title="We couldn't find any matches" body="Check your spelling, try fewer filters, or search for an ingredient instead." action={<Link href="/search/" className="btn-primary">Browse all recipes</Link>} />}
           <Pagination page={res.page} pages={res.pages} href={(p) => qs({ page: String(p) })} />

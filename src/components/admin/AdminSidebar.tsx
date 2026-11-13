@@ -2,14 +2,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, UtensilsCrossed, ShieldCheck, FolderTree, Library, Newspaper, Clapperboard, Users, MessageSquareText, Image as ImageIcon, LayoutTemplate, FileText, Inbox, Mail, ExternalLink, Menu, X } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, ShieldCheck, FolderTree, Library, Newspaper, Clapperboard, Users, MessageSquareText, Image as ImageIcon, LayoutTemplate, FileText, Inbox, Mail, ExternalLink, Menu, X, Camera, Upload, ArrowRightLeft, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { group: "Overview", items: [["/admin", "Dashboard", LayoutDashboard]] },
-  { group: "Content", items: [["/admin/recipes", "Recipes", UtensilsCrossed], ["/admin/categories", "Categories", FolderTree], ["/admin/collections", "Collections", Library], ["/admin/articles", "Articles & Guides", Newspaper], ["/admin/videos", "Videos", Clapperboard], ["/admin/media", "Media Library", ImageIcon]] },
-  { group: "Community", items: [["/admin/moderation", "Moderation", ShieldCheck], ["/admin/reviews", "Ratings & Reviews", MessageSquareText], ["/admin/users", "Users & Authors", Users]] },
-  { group: "Site", items: [["/admin/homepage", "Homepage", LayoutTemplate], ["/admin/pages", "Pages & SEO", FileText], ["/admin/messages", "Messages", Inbox], ["/admin/outbox", "Email Outbox", Mail]] },
+  { group: "Content", items: [["/admin/recipes", "Recipes", UtensilsCrossed], ["/admin/categories", "Categories", FolderTree], ["/admin/collections", "Collections", Library], ["/admin/articles", "Articles & Guides", Newspaper], ["/admin/videos", "Videos", Clapperboard], ["/admin/media", "Media Library", ImageIcon], ["/admin/import", "Bulk Import", Upload]] },
+  { group: "Community", items: [["/admin/moderation", "Moderation", ShieldCheck], ["/admin/reviews", "Ratings & Reviews", MessageSquareText], ["/admin/photos", "Community Photos", Camera], ["/admin/users", "Users & Authors", Users]] },
+  { group: "Site", items: [["/admin/homepage", "Homepage", LayoutTemplate], ["/admin/pages", "Pages & SEO", FileText], ["/admin/redirects", "URL Redirects", ArrowRightLeft], ["/admin/messages", "Messages", Inbox], ["/admin/outbox", "Email Outbox", Mail], ["/admin/settings", "Settings", Settings]] },
 ] as const;
 
 export function AdminSidebar({ counts, user }: { counts: Record<string, number>; user: { name: string; role: string } }) {

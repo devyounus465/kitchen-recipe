@@ -13,6 +13,7 @@ import { RecipeCard } from "@/components/recipe/RecipeCard";
 import { ShareButton } from "@/components/recipe/ShareButton";
 import { ArticleCard, kindLabel } from "@/components/editorial/ArticleCard";
 import { articleUrl, cookUrl, formatDate } from "@/lib/utils";
+import { followRedirect } from "@/lib/redirects";
 
 type P = { params: Promise<{ slug: string }> };
 async function load(slug: string) {
@@ -25,8 +26,8 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
   return { title: a.seoTitle || a.title, description: a.seoDescription || a.dek || undefined, alternates: { canonical: articleUrl(a) }, openGraph: { type: "article", images: a.heroUrl ? [a.heroUrl] : [] } };
 }
 export default async function ArticlePage({ params }: P) {
-  const a = await load((await params).slug); const user = await getUser();
-  if (!a || (a.status !== "published" && !isStaffRole(user?.role))) notFound();
+  const { slug } = await params; const a = await load(slug); const user = await getUser();
+  if (!a || (a.status !== "published" && !isStaffRole(user?.role))) { await followRedirect(`/article/${slug}/`); notFound(); }
   const [recipesRel, more, saved] = await Promise.all([cardsByIds(a.relatedRecipeIds),
     db.select({ id: articles.id, slug: articles.slug, title: articles.title, dek: articles.dek, heroUrl: articles.heroUrl, kind: articles.kind, publishedAt: articles.publishedAt, authorName: users.name }).from(articles).leftJoin(users, eq(users.id, articles.authorId)).where(and(eq(articles.status, "published"), ne(articles.id, a.id))).orderBy(desc(articles.publishedAt)).limit(3),
     savedIdSet(user?.id)]);

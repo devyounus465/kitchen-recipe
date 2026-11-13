@@ -15,7 +15,7 @@ services:
     build: .
     restart: unless-stopped
     depends_on: { db: { condition: service_healthy } }
-    env_file: [.env]   # optional settings (e.g. SOCIAL_*); values below take precedence
+    env_file: [.env]   # optional settings (SMTP_*, STAGING_PASSWORD…); values below take precedence
     environment:
       DATABASE_URL: postgres://simmerly:${POSTGRES_PASSWORD}@db:5432/simmerly
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env (openssl rand -hex 32)}

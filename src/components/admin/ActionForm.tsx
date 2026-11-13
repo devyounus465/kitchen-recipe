@@ -20,6 +20,6 @@ export function ActionForm({ action, children, className }: { action: (s: FormSt
     </form>
   );
 }
-export function ConfirmButton({ children, className, message = "Are you sure? This cannot be undone." }: { children: React.ReactNode; className?: string; message?: string }) {
-  return <button className={className} onClick={(e) => { if (!confirm(message)) e.preventDefault(); }}>{children}</button>;
+export function ConfirmButton({ children, className, message = "Are you sure? This cannot be undone.", name, value }: { children: React.ReactNode; className?: string; message?: string; name?: string; value?: string }) {
+  return <button name={name} value={value} className={className} onClick={(e) => { if (!confirm(message)) e.preventDefault(); }}>{children}</button>;
 }

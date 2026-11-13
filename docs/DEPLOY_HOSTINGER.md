@@ -50,6 +50,9 @@ Check health any time: `curl https://YOUR_DOMAIN/api/health/` → `{"ok":true,"d
 **Email**: set the `SMTP_*` lines in `.env` (a Hostinger mailbox works), then
 `docker compose up -d`. Without SMTP, password-reset emails only appear in Admin → Email outbox.
 
+**Private staging**: to show the client a password-protected site before launch, set
+`STAGING_PASSWORD=...` in `.env` and run `docker compose up -d`. Remove it for the public launch.
+
 ## 6. Backups (daily, 14-day retention)
 ```bash
 crontab -e

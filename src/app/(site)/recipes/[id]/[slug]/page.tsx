@@ -43,7 +43,8 @@ export default async function CategoryPage({ params, searchParams }: P) {
         </div>
       )}
       {featured.length > 0 && (
-        <section className="mt-10 grid gap-6 md:grid-cols-[2fr_1fr]">
+        <section className="mt-10 grid gap-6 md:grid-cols-[2fr_1fr]" aria-labelledby="featured-h">
+          <h2 id="featured-h" className="sr-only">Featured {c.name} recipes</h2>
           <RecipeCard r={featured[0]} size="lg" saved={saved.has(featured[0].id)} loggedIn={!!user} />
           <div className="grid gap-6">{featured.slice(1).map((r) => <RecipeCard key={r.id} r={r} size="sm" saved={saved.has(r.id)} loggedIn={!!user} />)}</div>
         </section>
